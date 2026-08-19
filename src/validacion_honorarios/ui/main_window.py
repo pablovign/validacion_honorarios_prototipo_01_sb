@@ -11,6 +11,9 @@ from validacion_honorarios.ui.aduanas_view import (
 from validacion_honorarios.ui.canales_selectividad_view import (
     CanalesSelectividadView,
 )
+from validacion_honorarios.ui.esquemas_cotizacion_view import (
+    EsquemasCotizacionView,
+)
 from validacion_honorarios.ui.proveedores_view import (
     ProveedoresView,
 )
@@ -21,8 +24,8 @@ class MainWindow(tk.Tk):
         super().__init__()
 
         self.title(settings.app_name)
-        self.geometry("1200x720")
-        self.minsize(950, 600)
+        self.geometry("1280x760")
+        self.minsize(1000, 620)
 
         self.current_view: ttk.Frame | None = None
 
@@ -118,7 +121,7 @@ class MainWindow(tk.Tk):
         ttk.Button(
             navigation,
             text="Esquemas de cotización",
-            command=self._show_not_implemented,
+            command=self._show_quotes,
             style="Navigation.TButton",
         ).pack(
             fill=tk.X,
@@ -282,32 +285,25 @@ class MainWindow(tk.Tk):
         self._replace_view(view)
 
     def _show_customs_offices(self) -> None:
-        view = AduanasView(
-            self.content
+        self._replace_view(
+            AduanasView(self.content)
         )
-
-        self._replace_view(view)
 
     def _show_providers(self) -> None:
-        view = ProveedoresView(
-            self.content
+        self._replace_view(
+            ProveedoresView(self.content)
         )
 
-        self._replace_view(view)
+    def _show_quotes(self) -> None:
+        self._replace_view(
+            EsquemasCotizacionView(
+                self.content
+            )
+        )
 
     def _show_channels(self) -> None:
-        view = CanalesSelectividadView(
-            self.content
-        )
-
-        self._replace_view(view)
-
-    def _show_not_implemented(self) -> None:
-        messagebox.showinfo(
-            title="Próximamente",
-            message=(
-                "Esta sección será incorporada "
-                "en los próximos pasos del MVP."
-            ),
-            parent=self,
+        self._replace_view(
+            CanalesSelectividadView(
+                self.content
+            )
         )
