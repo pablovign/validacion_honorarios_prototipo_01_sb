@@ -1,0 +1,39 @@
+# Entorno virtual
+.venv/
+venv/
+
+# Variables y secretos
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Documentos cargados
+data/documentos/*
+!data/documentos/.gitkeep
+
+# Temporales y bases locales
+*.sqlite
+*.db
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Empaquetado
+build/
+dist/
+*.egg-info/
