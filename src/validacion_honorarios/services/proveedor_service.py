@@ -2,13 +2,8 @@ import re
 
 from sqlalchemy.exc import IntegrityError
 
-from validacion_honorarios.db.connection import (
-    session_scope,
-)
-from validacion_honorarios.db.models import (
-    Aduana,
-    Proveedor,
-)
+from validacion_honorarios.db.connection import session_scope
+from validacion_honorarios.db.models import Proveedor
 from validacion_honorarios.repositories.aduana_repository import (
     AduanaRepository,
 )
@@ -22,9 +17,7 @@ from validacion_honorarios.services.exceptions import (
 )
 
 
-CUIT_PATTERN = re.compile(
-    r"^[0-9]{11}$"
-)
+CUIT_PATTERN = re.compile(r"^[0-9]{11}$")
 
 
 class ProveedorService:
@@ -57,14 +50,7 @@ class ProveedorService:
                 aduana_id=aduana_id,
             )
 
-            for proveedor in proveedores:
-                session.expunge(
-                    proveedor.aduana
-                )
-
-                session.expunge(
-                    proveedor
-                )
+            session.expunge_all()
 
             return proveedores
 
@@ -91,15 +77,7 @@ class ProveedorService:
                     "El proveedor solicitado no existe."
                 )
 
-            aduana = proveedor.aduana
-
-            session.expunge(
-                aduana
-            )
-
-            session.expunge(
-                proveedor
-            )
+            session.expunge_all()
 
             return proveedor
 
@@ -128,8 +106,8 @@ class ProveedorService:
 
         try:
             with session_scope() as session:
-                aduana_repository = (
-                    AduanaRepository(session)
+                aduana_repository = AduanaRepository(
+                    session
                 )
 
                 proveedor_repository = (
@@ -137,8 +115,7 @@ class ProveedorService:
                 )
 
                 aduana = (
-                    aduana_repository
-                    .obtener_por_id(
+                    aduana_repository.obtener_por_id(
                         aduana_id
                     )
                 )
@@ -154,25 +131,15 @@ class ProveedorService:
                     cuit=cuit_normalizado,
                 )
 
-                proveedor = (
-                    proveedor_repository.crear(
-                        aduana_id=aduana_id,
-                        razon_social=(
-                            razon_social_normalizada
-                        ),
-                        cuit=cuit_normalizado,
-                    )
+                proveedor = proveedor_repository.crear(
+                    aduana_id=aduana_id,
+                    razon_social=razon_social_normalizada,
+                    cuit=cuit_normalizado,
                 )
 
                 proveedor.aduana = aduana
 
-                session.expunge(
-                    aduana
-                )
-
-                session.expunge(
-                    proveedor
-                )
+                session.expunge_all()
 
                 return proveedor
 
@@ -214,8 +181,8 @@ class ProveedorService:
 
         try:
             with session_scope() as session:
-                aduana_repository = (
-                    AduanaRepository(session)
+                aduana_repository = AduanaRepository(
+                    session
                 )
 
                 proveedor_repository = (
@@ -223,8 +190,7 @@ class ProveedorService:
                 )
 
                 proveedor = (
-                    proveedor_repository
-                    .obtener_por_id(
+                    proveedor_repository.obtener_por_id(
                         proveedor_id
                     )
                 )
@@ -236,8 +202,7 @@ class ProveedorService:
                     )
 
                 aduana = (
-                    aduana_repository
-                    .obtener_por_id(
+                    aduana_repository.obtener_por_id(
                         aduana_id
                     )
                 )
@@ -251,31 +216,19 @@ class ProveedorService:
                 self._validar_unicidad(
                     repository=proveedor_repository,
                     cuit=cuit_normalizado,
-                    excluir_proveedor_id=(
-                        proveedor_id
-                    ),
+                    excluir_proveedor_id=proveedor_id,
                 )
 
-                proveedor = (
-                    proveedor_repository.actualizar(
-                        proveedor=proveedor,
-                        aduana_id=aduana_id,
-                        razon_social=(
-                            razon_social_normalizada
-                        ),
-                        cuit=cuit_normalizado,
-                    )
+                proveedor = proveedor_repository.actualizar(
+                    proveedor=proveedor,
+                    aduana_id=aduana_id,
+                    razon_social=razon_social_normalizada,
+                    cuit=cuit_normalizado,
                 )
 
                 proveedor.aduana = aduana
 
-                session.expunge(
-                    aduana
-                )
-
-                session.expunge(
-                    proveedor
-                )
+                session.expunge_all()
 
                 return proveedor
 
@@ -329,9 +282,7 @@ class ProveedorService:
                 "porque tiene información relacionada."
             ) from exc
 
-    def listar_aduanas(
-        self,
-    ):
+    def listar_aduanas(self):
         with session_scope() as session:
             repository = AduanaRepository(
                 session
@@ -339,10 +290,7 @@ class ProveedorService:
 
             aduanas = repository.listar()
 
-            for aduana in aduanas:
-                session.expunge(
-                    aduana
-                )
+            session.expunge_all()
 
             return aduanas
 
@@ -352,14 +300,8 @@ class ProveedorService:
         entidad: str,
     ) -> None:
         if (
-            not isinstance(
-                identificador,
-                int,
-            )
-            or isinstance(
-                identificador,
-                bool,
-            )
+            not isinstance(identificador, int)
+            or isinstance(identificador, bool)
             or identificador <= 0
         ):
             raise ValidationError(
@@ -410,9 +352,7 @@ class ProveedorService:
                 "La razón social es obligatoria."
             )
 
-        if len(
-            razon_social_normalizada
-        ) > 200:
+        if len(razon_social_normalizada) > 200:
             raise ValidationError(
                 "La razón social no puede superar "
                 "los 200 caracteres."

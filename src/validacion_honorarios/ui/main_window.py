@@ -8,6 +8,9 @@ from validacion_honorarios.db.connection import (
 from validacion_honorarios.ui.aduanas_view import (
     AduanasView,
 )
+from validacion_honorarios.ui.proveedores_view import (
+    ProveedoresView,
+)
 
 
 class MainWindow(tk.Tk):
@@ -102,7 +105,7 @@ class MainWindow(tk.Tk):
         ttk.Button(
             navigation,
             text="Proveedores",
-            command=self._show_not_implemented,
+            command=self._show_providers,
             style="Navigation.TButton",
         ).pack(
             fill=tk.X,
@@ -277,6 +280,13 @@ class MainWindow(tk.Tk):
 
     def _show_customs_offices(self) -> None:
         view = AduanasView(
+            self.content
+        )
+
+        self._replace_view(view)
+
+    def _show_providers(self) -> None:
+        view = ProveedoresView(
             self.content
         )
 
