@@ -8,6 +8,9 @@ from validacion_honorarios.db.connection import (
 from validacion_honorarios.ui.aduanas_view import (
     AduanasView,
 )
+from validacion_honorarios.ui.canales_selectividad_view import (
+    CanalesSelectividadView,
+)
 from validacion_honorarios.ui.proveedores_view import (
     ProveedoresView,
 )
@@ -125,7 +128,7 @@ class MainWindow(tk.Tk):
         ttk.Button(
             navigation,
             text="Canales de selectividad",
-            command=self._show_not_implemented,
+            command=self._show_channels,
             style="Navigation.TButton",
         ).pack(
             fill=tk.X,
@@ -287,6 +290,13 @@ class MainWindow(tk.Tk):
 
     def _show_providers(self) -> None:
         view = ProveedoresView(
+            self.content
+        )
+
+        self._replace_view(view)
+
+    def _show_channels(self) -> None:
+        view = CanalesSelectividadView(
             self.content
         )
 
