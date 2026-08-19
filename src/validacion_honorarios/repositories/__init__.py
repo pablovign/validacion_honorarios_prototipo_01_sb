@@ -1,6 +1,9 @@
 from validacion_honorarios.repositories.aduana_repository import (
     AduanaRepository,
 )
+from validacion_honorarios.repositories.canal_selectividad_repository import (
+    CanalSelectividadRepository,
+)
 from validacion_honorarios.repositories.proveedor_repository import (
     ProveedorRepository,
 )
@@ -8,5 +11,6 @@ from validacion_honorarios.repositories.proveedor_repository import (
 
 __all__ = [
     "AduanaRepository",
+    "CanalSelectividadRepository",
     "ProveedorRepository",
 ]
