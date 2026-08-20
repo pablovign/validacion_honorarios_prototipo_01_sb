@@ -13,7 +13,9 @@ from validacion_honorarios.services import (
 from validacion_honorarios.ui.esquema_cotizacion_dialog import (
     EsquemaCotizacionDialog,
 )
-
+from validacion_honorarios.ui.completar_esquema_window import (
+    CompletarEsquemaWindow,
+)
 
 class EsquemasCotizacionView(ttk.Frame):
     """Listado y gestión inicial de esquemas."""
@@ -981,7 +983,7 @@ class EsquemasCotizacionView(ttk.Frame):
                 parent=self,
             )
             return
-
+        
         if esquema.estado != "BORRADOR":
             messagebox.showinfo(
                 title="Esquema no editable",
@@ -992,14 +994,11 @@ class EsquemasCotizacionView(ttk.Frame):
                 parent=self,
             )
             return
-
-        messagebox.showinfo(
-            title="Completar esquema",
-            message=(
-                f"Se abrirá el asistente para "
-                f"completar el esquema {esquema_id}.\n\n"
-                "El próximo paso incorporará zonas "
-                "y tarifas por canal."
-            ),
+        
+        window = CompletarEsquemaWindow(
             parent=self,
+            esquema_cotizacion_id=esquema_id,
         )
+
+        self.wait_window(window)
+        self._refresh_all()
