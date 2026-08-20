@@ -1,3 +1,6 @@
+from validacion_honorarios.services.adicional_camiones_service import (
+    AdicionalCamionesService,
+)
 from validacion_honorarios.services.aduana_service import (
     AduanaService,
 )
@@ -23,6 +26,7 @@ from validacion_honorarios.services.exceptions import (
 
 
 __all__ = [
+    "AdicionalCamionesService",
     "AduanaService",
     "CanalSelectividadService",
     "EsquemaCotizacionService",
