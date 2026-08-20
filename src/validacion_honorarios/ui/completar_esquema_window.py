@@ -19,7 +19,9 @@ from validacion_honorarios.ui.monto_tarifa_dialog import (
 from validacion_honorarios.ui.zona_dialog import (
     ZonaDialog,
 )
-
+from validacion_honorarios.ui.adicionales_camiones_window import (
+    AdicionalesCamionesWindow,
+)
 
 class CompletarEsquemaWindow(tk.Toplevel):
     """Edición de los componentes internos de un esquema."""
@@ -163,11 +165,21 @@ class CompletarEsquemaWindow(tk.Toplevel):
 
         ttk.Button(
             footer,
+            text="Adicionales por camiones",
+            command=self._open_truck_additions,
+        ).pack(
+            side=tk.RIGHT,
+            padx=(0, 8),
+        )
+
+        ttk.Button(
+            footer,
             text="Cerrar",
-            command=self.destroy,
+        command=self.destroy,
         ).pack(
             side=tk.RIGHT,
         )
+        
 
         ttk.Label(
             footer,
@@ -1316,3 +1328,14 @@ class CompletarEsquemaWindow(tk.Toplevel):
             "_",
             ".",
         )
+
+    def _open_truck_additions(self) -> None:
+        window = AdicionalesCamionesWindow(
+            parent=self,
+            esquema_cotizacion_id=(
+                self.esquema_cotizacion_id
+            ),
+        )
+
+        self.wait_window(window)
+        self._refresh_all()
