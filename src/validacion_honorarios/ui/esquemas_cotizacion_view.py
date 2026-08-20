@@ -16,6 +16,9 @@ from validacion_honorarios.ui.esquema_cotizacion_dialog import (
 from validacion_honorarios.ui.completar_esquema_window import (
     CompletarEsquemaWindow,
 )
+from validacion_honorarios.ui.resumen_esquema_window import (
+    ResumenEsquemaWindow,
+)
 
 class EsquemasCotizacionView(ttk.Frame):
     """Listado y gestión inicial de esquemas."""
@@ -482,6 +485,15 @@ class EsquemasCotizacionView(ttk.Frame):
             action_frame,
             text="Completar esquema",
             command=self._complete_quote,
+        ).pack(
+            side=tk.LEFT,
+            padx=(8, 0),
+        )
+
+        ttk.Button(
+            action_frame,
+            text="Ver resumen",
+            command=self._show_summary,
         ).pack(
             side=tk.LEFT,
             padx=(8, 0),
@@ -1002,3 +1014,16 @@ class EsquemasCotizacionView(ttk.Frame):
 
         self.wait_window(window)
         self._refresh_all()
+
+    def _show_summary(self) -> None:
+        esquema_id = self._selected_id()
+
+        if esquema_id is None:
+            return
+
+        window = ResumenEsquemaWindow(
+            parent=self,
+            esquema_cotizacion_id=esquema_id,
+        )
+
+        self.wait_window(window)

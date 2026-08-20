@@ -26,6 +26,9 @@ from validacion_honorarios.services.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from validacion_honorarios.services.resumen_esquema_service import (
+    ResumenEsquemaService,
+)
 
 
 __all__ = [
@@ -41,4 +44,5 @@ __all__ = [
     "ConflictError",
     "NotFoundError",
     "ValidationError",
+    "ResumenEsquemaService",
 ]

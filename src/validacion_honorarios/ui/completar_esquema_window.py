@@ -22,6 +22,12 @@ from validacion_honorarios.ui.zona_dialog import (
 from validacion_honorarios.ui.adicionales_camiones_window import (
     AdicionalesCamionesWindow,
 )
+from validacion_honorarios.ui.adicionales_dia_hora_window import (
+    AdicionalesDiaHoraWindow,
+)
+from validacion_honorarios.ui.resumen_esquema_window import (
+    ResumenEsquemaWindow,
+)
 
 class CompletarEsquemaWindow(tk.Toplevel):
     """Edición de los componentes internos de un esquema."""
@@ -165,8 +171,26 @@ class CompletarEsquemaWindow(tk.Toplevel):
 
         ttk.Button(
             footer,
+            text="Adicionales por día y hora",
+            command=self._open_day_hour_additions,
+        ).pack(
+            side=tk.RIGHT,
+            padx=(0, 8),
+        )
+
+        ttk.Button(
+            footer,
             text="Adicionales por camiones",
             command=self._open_truck_additions,
+        ).pack(
+            side=tk.RIGHT,
+            padx=(0, 8),
+        )
+
+        ttk.Button(
+            footer,
+            text="Vista general",
+            command=self._open_summary,
         ).pack(
             side=tk.RIGHT,
             padx=(0, 8),
@@ -1339,3 +1363,24 @@ class CompletarEsquemaWindow(tk.Toplevel):
 
         self.wait_window(window)
         self._refresh_all()
+
+    def _open_day_hour_additions(self) -> None:
+        window = AdicionalesDiaHoraWindow(
+            parent=self,
+            esquema_cotizacion_id=(
+                self.esquema_cotizacion_id
+            ),
+        )
+
+        self.wait_window(window)
+        self._refresh_all()
+
+    def _open_summary(self) -> None:
+        window = ResumenEsquemaWindow(
+            parent=self,
+            esquema_cotizacion_id=(
+                self.esquema_cotizacion_id
+        ),
+    )
+
+        self.wait_window(window)
