@@ -13,6 +13,9 @@ from validacion_honorarios.services.esquema_cotizacion_service import (
 from validacion_honorarios.services.proveedor_service import (
     ProveedorService,
 )
+from validacion_honorarios.services.tarifa_dia_hora_service import (
+    TarifaDiaHoraService,
+)
 from validacion_honorarios.services.zona_tarifa_service import (
     ZonaTarifaService,
 )
@@ -31,6 +34,7 @@ __all__ = [
     "CanalSelectividadService",
     "EsquemaCotizacionService",
     "ProveedorService",
+    "TarifaDiaHoraService",
     "ZonaTarifaService",
     "ApplicationError",
     "BusinessRuleError",

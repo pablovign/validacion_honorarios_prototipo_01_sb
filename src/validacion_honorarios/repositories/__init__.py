@@ -16,6 +16,9 @@ from validacion_honorarios.repositories.proveedor_repository import (
 from validacion_honorarios.repositories.tarifa_camiones_zona_repository import (
     TarifaCamionesZonaRepository,
 )
+from validacion_honorarios.repositories.tarifa_dia_hora_repository import (
+    TarifaDiaHoraRepository,
+)
 from validacion_honorarios.repositories.tarifa_zona_canal_repository import (
     TarifaZonaCanalRepository,
 )
@@ -31,6 +34,7 @@ __all__ = [
     "EsquemaCotizacionRepository",
     "ProveedorRepository",
     "TarifaCamionesZonaRepository",
+    "TarifaDiaHoraRepository",
     "TarifaZonaCanalRepository",
     "ZonaRepository",
 ]
