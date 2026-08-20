@@ -10,6 +10,9 @@ from validacion_honorarios.services.esquema_cotizacion_service import (
 from validacion_honorarios.services.proveedor_service import (
     ProveedorService,
 )
+from validacion_honorarios.services.zona_tarifa_service import (
+    ZonaTarifaService,
+)
 from validacion_honorarios.services.exceptions import (
     ApplicationError,
     BusinessRuleError,
@@ -24,17 +27,7 @@ __all__ = [
     "CanalSelectividadService",
     "EsquemaCotizacionService",
     "ProveedorService",
-    "ApplicationError",
-    "BusinessRuleError",
-    "ConflictError",
-    "NotFoundError",
-    "ValidationError",
-]
-
-__all__ = [
-    "AduanaService",
-    "CanalSelectividadService",
-    "ProveedorService",
+    "ZonaTarifaService",
     "ApplicationError",
     "BusinessRuleError",
     "ConflictError",
