@@ -2,17 +2,16 @@ from datetime import date, datetime
 
 from sqlalchemy.exc import IntegrityError
 
-from validacion_honorarios.db.connection import (
-    session_scope,
-)
-from validacion_honorarios.db.models import (
-    EsquemaCotizacion,
-)
+from validacion_honorarios.db.connection import session_scope
+from validacion_honorarios.db.models import EsquemaCotizacion
 from validacion_honorarios.repositories.esquema_cotizacion_repository import (
     EsquemaCotizacionRepository,
 )
 from validacion_honorarios.repositories.proveedor_repository import (
     ProveedorRepository,
+)
+from validacion_honorarios.repositories.zona_repository import (
+    ZonaRepository,
 )
 from validacion_honorarios.services.exceptions import (
     BusinessRuleError,
@@ -33,6 +32,8 @@ MONEDAS_VALIDAS = {
     "USD",
 }
 
+NOMBRE_ZONA_INICIAL = "GENERAL"
+
 
 class EsquemaCotizacionService:
     """Casos de uso de esquemas de cotización."""
@@ -45,11 +46,7 @@ class EsquemaCotizacionService:
         estado: str | None = None,
         moneda_codigo: str | None = None,
     ):
-        termino = (
-            busqueda.strip()
-            if busqueda
-            else None
-        )
+        termino = busqueda.strip() if busqueda else None
 
         if proveedor_id is not None:
             self._validar_id(
@@ -66,26 +63,20 @@ class EsquemaCotizacionService:
         estado_normalizado = None
 
         if estado:
-            estado_normalizado = (
-                self._normalizar_estado(
-                    estado
-                )
+            estado_normalizado = self._normalizar_estado(
+                estado
             )
 
         moneda_normalizada = None
 
         if moneda_codigo:
-            moneda_normalizada = (
-                self._normalizar_moneda(
-                    moneda_codigo
-                )
+            moneda_normalizada = self._normalizar_moneda(
+                moneda_codigo
             )
 
         with session_scope() as session:
-            repository = (
-                EsquemaCotizacionRepository(
-                    session
-                )
+            repository = EsquemaCotizacionRepository(
+                session
             )
 
             esquemas = repository.listar(
@@ -110,10 +101,8 @@ class EsquemaCotizacionService:
         )
 
         with session_scope() as session:
-            repository = (
-                EsquemaCotizacionRepository(
-                    session
-                )
+            repository = EsquemaCotizacionRepository(
+                session
             )
 
             esquema = repository.obtener_por_id(
@@ -122,8 +111,7 @@ class EsquemaCotizacionService:
 
             if esquema is None:
                 raise NotFoundError(
-                    "El esquema de cotización "
-                    "solicitado no existe."
+                    "El esquema de cotización solicitado no existe."
                 )
 
             session.expunge_all()
@@ -137,23 +125,19 @@ class EsquemaCotizacionService:
         moneda_codigo: str,
         observaciones: str | None = None,
     ) -> EsquemaCotizacion:
+        """Crea la cabecera y su zona GENERAL en una transacción."""
+
         self._validar_id(
             proveedor_id,
             "proveedor",
         )
 
-        fecha_normalizada = (
-            self._normalizar_fecha(
-                fecha_inicio
-            )
+        fecha_normalizada = self._normalizar_fecha(
+            fecha_inicio
         )
-
-        moneda_normalizada = (
-            self._normalizar_moneda(
-                moneda_codigo
-            )
+        moneda_normalizada = self._normalizar_moneda(
+            moneda_codigo
         )
-
         observaciones_normalizadas = (
             self._normalizar_observaciones(
                 observaciones
@@ -162,30 +146,28 @@ class EsquemaCotizacionService:
 
         try:
             with session_scope() as session:
-                proveedor_repository = (
-                    ProveedorRepository(session)
+                proveedor_repository = ProveedorRepository(
+                    session
                 )
-
-                repository = (
+                esquema_repository = (
                     EsquemaCotizacionRepository(
                         session
                     )
                 )
+                zona_repository = ZonaRepository(
+                    session
+                )
 
-                proveedor = (
-                    proveedor_repository
-                    .obtener_por_id(
-                        proveedor_id
-                    )
+                proveedor = proveedor_repository.obtener_por_id(
+                    proveedor_id
                 )
 
                 if proveedor is None:
                     raise NotFoundError(
-                        "El proveedor seleccionado "
-                        "no existe."
+                        "El proveedor seleccionado no existe."
                     )
 
-                esquema = repository.crear(
+                esquema = esquema_repository.crear(
                     proveedor_id=proveedor_id,
                     fecha_inicio=fecha_normalizada,
                     moneda_codigo=moneda_normalizada,
@@ -194,7 +176,15 @@ class EsquemaCotizacionService:
                     ),
                 )
 
+                zona_inicial = zona_repository.crear(
+                    esquema_cotizacion_id=(
+                        esquema.esquema_cotizacion_id
+                    ),
+                    nombre=NOMBRE_ZONA_INICIAL,
+                )
+
                 esquema.proveedor = proveedor
+                esquema.zonas.append(zona_inicial)
 
                 session.expunge_all()
 
@@ -202,8 +192,8 @@ class EsquemaCotizacionService:
 
         except IntegrityError as exc:
             raise ConflictError(
-                "No se pudo crear el esquema "
-                "de cotización."
+                "No se pudo crear el esquema de cotización "
+                "con su zona inicial GENERAL."
             ) from exc
 
     def actualizar(
@@ -218,24 +208,17 @@ class EsquemaCotizacionService:
             esquema_cotizacion_id,
             "esquema de cotización",
         )
-
         self._validar_id(
             proveedor_id,
             "proveedor",
         )
 
-        fecha_normalizada = (
-            self._normalizar_fecha(
-                fecha_inicio
-            )
+        fecha_normalizada = self._normalizar_fecha(
+            fecha_inicio
         )
-
-        moneda_normalizada = (
-            self._normalizar_moneda(
-                moneda_codigo
-            )
+        moneda_normalizada = self._normalizar_moneda(
+            moneda_codigo
         )
-
         observaciones_normalizadas = (
             self._normalizar_observaciones(
                 observaciones
@@ -244,14 +227,11 @@ class EsquemaCotizacionService:
 
         try:
             with session_scope() as session:
-                proveedor_repository = (
-                    ProveedorRepository(session)
+                proveedor_repository = ProveedorRepository(
+                    session
                 )
-
-                repository = (
-                    EsquemaCotizacionRepository(
-                        session
-                    )
+                repository = EsquemaCotizacionRepository(
+                    session
                 )
 
                 esquema = repository.obtener_por_id(
@@ -260,25 +240,20 @@ class EsquemaCotizacionService:
 
                 if esquema is None:
                     raise NotFoundError(
-                        "El esquema que se intenta "
-                        "modificar no existe."
+                        "El esquema que se intenta modificar no existe."
                     )
 
                 self._validar_editable(
                     esquema
                 )
 
-                proveedor = (
-                    proveedor_repository
-                    .obtener_por_id(
-                        proveedor_id
-                    )
+                proveedor = proveedor_repository.obtener_por_id(
+                    proveedor_id
                 )
 
                 if proveedor is None:
                     raise NotFoundError(
-                        "El proveedor seleccionado "
-                        "no existe."
+                        "El proveedor seleccionado no existe."
                     )
 
                 esquema = repository.actualizar(
@@ -299,8 +274,7 @@ class EsquemaCotizacionService:
 
         except IntegrityError as exc:
             raise ConflictError(
-                "No se pudo modificar el "
-                "esquema de cotización."
+                "No se pudo modificar el esquema de cotización."
             ) from exc
 
     def rechazar(
@@ -313,10 +287,8 @@ class EsquemaCotizacionService:
         )
 
         with session_scope() as session:
-            repository = (
-                EsquemaCotizacionRepository(
-                    session
-                )
+            repository = EsquemaCotizacionRepository(
+                session
             )
 
             esquema = repository.obtener_por_id(
@@ -325,8 +297,7 @@ class EsquemaCotizacionService:
 
             if esquema is None:
                 raise NotFoundError(
-                    "El esquema que se intenta "
-                    "rechazar no existe."
+                    "El esquema que se intenta rechazar no existe."
                 )
 
             self._validar_editable(
@@ -353,10 +324,8 @@ class EsquemaCotizacionService:
 
         try:
             with session_scope() as session:
-                repository = (
-                    EsquemaCotizacionRepository(
-                        session
-                    )
+                repository = EsquemaCotizacionRepository(
+                    session
                 )
 
                 esquema = repository.obtener_por_id(
@@ -365,8 +334,7 @@ class EsquemaCotizacionService:
 
                 if esquema is None:
                     raise NotFoundError(
-                        "El esquema que se intenta "
-                        "eliminar no existe."
+                        "El esquema que se intenta eliminar no existe."
                     )
 
                 self._validar_editable(
@@ -379,8 +347,8 @@ class EsquemaCotizacionService:
 
         except IntegrityError as exc:
             raise ConflictError(
-                "No se pudo eliminar el esquema "
-                "porque tiene información relacionada."
+                "No se pudo eliminar el esquema porque "
+                "tiene información relacionada."
             ) from exc
 
     def listar_proveedores(self):
@@ -401,9 +369,8 @@ class EsquemaCotizacionService:
     ) -> None:
         if esquema.estado != "BORRADOR":
             raise BusinessRuleError(
-                "Solo los esquemas en estado "
-                "BORRADOR pueden modificarse "
-                "o eliminarse."
+                "Solo los esquemas en estado BORRADOR "
+                "pueden modificarse o eliminarse."
             )
 
     @staticmethod
@@ -417,8 +384,7 @@ class EsquemaCotizacionService:
             or identificador <= 0
         ):
             raise ValidationError(
-                f"El identificador de {entidad} "
-                "no es válido."
+                f"El identificador de {entidad} no es válido."
             )
 
     @staticmethod
@@ -454,13 +420,11 @@ class EsquemaCotizacionService:
                     texto,
                     formato,
                 ).date()
-
             except ValueError:
                 continue
 
         raise ValidationError(
-            "La fecha debe ingresarse como "
-            "DD/MM/AAAA."
+            "La fecha debe ingresarse como DD/MM/AAAA."
         )
 
     @staticmethod
@@ -472,9 +436,7 @@ class EsquemaCotizacionService:
                 "La moneda es obligatoria."
             )
 
-        moneda_normalizada = (
-            moneda_codigo.strip().upper()
-        )
+        moneda_normalizada = moneda_codigo.strip().upper()
 
         if moneda_normalizada not in MONEDAS_VALIDAS:
             raise ValidationError(
@@ -492,14 +454,11 @@ class EsquemaCotizacionService:
                 "El estado es obligatorio."
             )
 
-        estado_normalizado = (
-            estado.strip().upper()
-        )
+        estado_normalizado = estado.strip().upper()
 
         if estado_normalizado not in ESTADOS_VALIDOS:
             raise ValidationError(
-                "El estado debe ser BORRADOR, "
-                "APROBADO o RECHAZADO."
+                "El estado debe ser BORRADOR, APROBADO o RECHAZADO."
             )
 
         return estado_normalizado
@@ -511,9 +470,7 @@ class EsquemaCotizacionService:
         if observaciones is None:
             return None
 
-        observaciones_normalizadas = (
-            observaciones.strip()
-        )
+        observaciones_normalizadas = observaciones.strip()
 
         if not observaciones_normalizadas:
             return None
