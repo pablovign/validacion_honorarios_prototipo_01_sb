@@ -34,6 +34,8 @@ class EsquemaCotizacionDialog(tk.Toplevel):
 
         self.resultado_guardado = False
 
+        self.esquema_guardado_id: int | None = None
+
         self.proveedor_var = tk.StringVar()
         self.aduana_var = tk.StringVar()
         self.fecha_inicio_var = tk.StringVar()
@@ -398,32 +400,28 @@ class EsquemaCotizacionDialog(tk.Toplevel):
 
         try:
             if self.esquema is None:
-                self.service.crear(
+                esquema_guardado = self.service.crear(
                     proveedor_id=proveedor.proveedor_id,
-                    fecha_inicio=(
-                        self.fecha_inicio_var.get()
-                    ),
-                    moneda_codigo=(
-                        self.moneda_var.get()
-                    ),
+                    fecha_inicio=self.fecha_inicio_var.get(),
+                    moneda_codigo=self.moneda_var.get(),
                     observaciones=observaciones,
+                )   
+                self.esquema_guardado_id = (
+                    esquema_guardado.esquema_cotizacion_id
                 )
             else:
-                self.service.actualizar(
-                    esquema_cotizacion_id=(
-                        self.esquema
-                        .esquema_cotizacion_id
-                    ),
-                    proveedor_id=(
-                        proveedor.proveedor_id
-                    ),
-                    fecha_inicio=(
-                        self.fecha_inicio_var.get()
-                    ),
-                    moneda_codigo=(
-                        self.moneda_var.get()
-                    ),
-                    observaciones=observaciones,
+                esquema_guardado = self.service.actualizar(
+                esquema_cotizacion_id=(
+                    self.esquema.esquema_cotizacion_id
+                ),
+                proveedor_id=proveedor.proveedor_id,
+                fecha_inicio=self.fecha_inicio_var.get(),
+                moneda_codigo=self.moneda_var.get(),
+                observaciones=observaciones,
+                )
+
+                self.esquema_guardado_id = (
+                    esquema_guardado.esquema_cotizacion_id
                 )
 
         except ApplicationError as exc:

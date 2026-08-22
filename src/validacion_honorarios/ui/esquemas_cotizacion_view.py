@@ -1,71 +1,38 @@
 import tkinter as tk
-from datetime import date
 from tkinter import messagebox, ttk
 
-from validacion_honorarios.db.models import (
-    Aduana,
-    Proveedor,
-)
+from validacion_honorarios.db.models import Aduana, Proveedor
 from validacion_honorarios.services import (
     ApplicationError,
     EsquemaCotizacionService,
 )
-from validacion_honorarios.ui.esquema_cotizacion_dialog import (
-    EsquemaCotizacionDialog,
-)
-from validacion_honorarios.ui.completar_esquema_window import (
-    CompletarEsquemaWindow,
+from validacion_honorarios.ui.esquema_wizard_window import (
+    EsquemaWizardWindow,
 )
 from validacion_honorarios.ui.resumen_esquema_window import (
     ResumenEsquemaWindow,
 )
 
+
 class EsquemasCotizacionView(ttk.Frame):
-    """Listado y gestión inicial de esquemas."""
+    """Listado y acceso al wizard de esquemas de cotización."""
 
     ALL_PROVIDERS = "Todos los proveedores"
-    ALL_CUSTOMS_OFFICES = "Todas las aduanas"
+    ALL_CUSTOMS = "Todas las aduanas"
     ALL_STATES = "Todos los estados"
     ALL_CURRENCIES = "Todas las monedas"
 
-    def __init__(
-        self,
-        parent: tk.Misc,
-    ) -> None:
-        super().__init__(
-            parent,
-            padding=20,
-        )
+    def __init__(self, parent: tk.Misc) -> None:
+        super().__init__(parent, padding=20)
 
         self.service = EsquemaCotizacionService()
-
-        self.busqueda_var = tk.StringVar()
-
-        self.proveedor_filtro_var = tk.StringVar(
-            value=self.ALL_PROVIDERS
-        )
-
-        self.aduana_filtro_var = tk.StringVar(
-            value=self.ALL_CUSTOMS_OFFICES
-        )
-
-        self.estado_filtro_var = tk.StringVar(
-            value=self.ALL_STATES
-        )
-
-        self.moneda_filtro_var = tk.StringVar(
-            value=self.ALL_CURRENCIES
-        )
-
-        self.proveedor_por_descripcion: dict[
-            str,
-            Proveedor,
-        ] = {}
-
-        self.aduana_por_descripcion: dict[
-            str,
-            Aduana,
-        ] = {}
+        self.search_var = tk.StringVar()
+        self.provider_filter_var = tk.StringVar(value=self.ALL_PROVIDERS)
+        self.customs_filter_var = tk.StringVar(value=self.ALL_CUSTOMS)
+        self.state_filter_var = tk.StringVar(value=self.ALL_STATES)
+        self.currency_filter_var = tk.StringVar(value=self.ALL_CURRENCIES)
+        self.provider_by_label: dict[str, Proveedor] = {}
+        self.customs_by_label: dict[str, Aduana] = {}
 
         self._build_interface()
         self._load_filter_values()
@@ -73,242 +40,105 @@ class EsquemasCotizacionView(ttk.Frame):
 
     def _build_interface(self) -> None:
         header = ttk.Frame(self)
-        header.pack(
-            fill=tk.X,
-            pady=(0, 14),
-        )
+        header.pack(fill=tk.X, pady=(0, 14))
 
         ttk.Label(
             header,
             text="Esquemas de cotización",
             style="SectionTitle.TLabel",
-        ).pack(
-            side=tk.LEFT,
-        )
+        ).pack(side=tk.LEFT)
 
         ttk.Button(
             header,
             text="Nuevo esquema",
             command=self._new_quote,
-        ).pack(
-            side=tk.RIGHT,
-        )
+        ).pack(side=tk.RIGHT)
 
         ttk.Label(
             self,
             text=(
-                "La cabecera identifica el proveedor, "
-                "la vigencia propuesta y la moneda. "
-                "Los componentes tarifarios se completarán "
-                "posteriormente."
+                "Los borradores se crean y completan mediante un único "
+                "asistente. Los esquemas rechazados o aprobados se consultan "
+                "desde su vista general."
             ),
-            wraplength=900,
-        ).pack(
-            fill=tk.X,
-            anchor=tk.W,
-            pady=(0, 14),
-        )
+            wraplength=950,
+        ).pack(fill=tk.X, anchor=tk.W, pady=(0, 14))
 
-        filter_container = ttk.LabelFrame(
-            self,
-            text="Filtros",
-            padding=12,
-        )
-        filter_container.pack(
-            fill=tk.X,
-            pady=(0, 12),
-        )
+        filters = ttk.LabelFrame(self, text="Filtros", padding=12)
+        filters.pack(fill=tk.X, pady=(0, 12))
 
-        ttk.Label(
-            filter_container,
-            text="Buscar",
-        ).grid(
-            row=0,
-            column=0,
-            sticky=tk.W,
-            pady=(0, 4),
-        )
+        ttk.Label(filters, text="Buscar").grid(row=0, column=0, sticky=tk.W)
+        ttk.Label(filters, text="Proveedor").grid(row=0, column=1, sticky=tk.W, padx=(10, 0))
+        ttk.Label(filters, text="Aduana").grid(row=0, column=2, sticky=tk.W, padx=(10, 0))
+        ttk.Label(filters, text="Estado").grid(row=2, column=0, sticky=tk.W, pady=(10, 0))
+        ttk.Label(filters, text="Moneda").grid(row=2, column=1, sticky=tk.W, padx=(10, 0), pady=(10, 0))
 
-        ttk.Label(
-            filter_container,
-            text="Proveedor",
-        ).grid(
-            row=0,
-            column=1,
-            sticky=tk.W,
-            padx=(10, 0),
-            pady=(0, 4),
-        )
+        search_entry = ttk.Entry(filters, textvariable=self.search_var)
+        search_entry.grid(row=1, column=0, sticky=tk.EW, pady=(4, 0))
+        search_entry.bind("<Return>", lambda _event: self._load_data())
 
-        ttk.Label(
-            filter_container,
-            text="Aduana",
-        ).grid(
-            row=0,
-            column=2,
-            sticky=tk.W,
-            padx=(10, 0),
-            pady=(0, 4),
-        )
-
-        self.search_entry = ttk.Entry(
-            filter_container,
-            textvariable=self.busqueda_var,
-            width=24,
-        )
-        self.search_entry.grid(
-            row=1,
-            column=0,
-            sticky=tk.EW,
-        )
-
-        self.search_entry.bind(
-            "<Return>",
-            lambda _event: self._load_data(),
-        )
-
-        self.proveedor_filter = ttk.Combobox(
-            filter_container,
-            textvariable=self.proveedor_filtro_var,
+        self.provider_filter = ttk.Combobox(
+            filters,
+            textvariable=self.provider_filter_var,
             state="readonly",
-            width=28,
         )
-        self.proveedor_filter.grid(
-            row=1,
-            column=1,
-            sticky=tk.EW,
-            padx=(10, 0),
-        )
+        self.provider_filter.grid(row=1, column=1, sticky=tk.EW, padx=(10, 0), pady=(4, 0))
 
-        self.aduana_filter = ttk.Combobox(
-            filter_container,
-            textvariable=self.aduana_filtro_var,
+        self.customs_filter = ttk.Combobox(
+            filters,
+            textvariable=self.customs_filter_var,
             state="readonly",
-            width=27,
         )
-        self.aduana_filter.grid(
-            row=1,
-            column=2,
-            sticky=tk.EW,
-            padx=(10, 0),
-        )
+        self.customs_filter.grid(row=1, column=2, sticky=tk.EW, padx=(10, 0), pady=(4, 0))
 
-        ttk.Label(
-            filter_container,
-            text="Estado",
-        ).grid(
-            row=2,
-            column=0,
-            sticky=tk.W,
-            pady=(10, 4),
-        )
-
-        ttk.Label(
-            filter_container,
-            text="Moneda",
-        ).grid(
-            row=2,
-            column=1,
-            sticky=tk.W,
-            padx=(10, 0),
-            pady=(10, 4),
-        )
-
-        self.estado_filter = ttk.Combobox(
-            filter_container,
-            textvariable=self.estado_filtro_var,
+        self.state_filter = ttk.Combobox(
+            filters,
+            textvariable=self.state_filter_var,
             state="readonly",
-            values=(
-                self.ALL_STATES,
-                "BORRADOR",
-                "APROBADO",
-                "RECHAZADO",
-            ),
+            values=(self.ALL_STATES, "BORRADOR", "APROBADO", "RECHAZADO"),
         )
-        self.estado_filter.grid(
-            row=3,
-            column=0,
-            sticky=tk.EW,
-        )
+        self.state_filter.grid(row=3, column=0, sticky=tk.EW, pady=(4, 0))
 
-        self.moneda_filter = ttk.Combobox(
-            filter_container,
-            textvariable=self.moneda_filtro_var,
+        self.currency_filter = ttk.Combobox(
+            filters,
+            textvariable=self.currency_filter_var,
             state="readonly",
-            values=(
-                self.ALL_CURRENCIES,
-                "ARS",
-                "USD",
-            ),
+            values=(self.ALL_CURRENCIES, "ARS", "USD"),
         )
-        self.moneda_filter.grid(
-            row=3,
-            column=1,
-            sticky=tk.EW,
-            padx=(10, 0),
-        )
+        self.currency_filter.grid(row=3, column=1, sticky=tk.EW, padx=(10, 0), pady=(4, 0))
 
-        button_frame = ttk.Frame(
-            filter_container
-        )
-        button_frame.grid(
-            row=3,
-            column=2,
-            sticky=tk.E,
-            padx=(10, 0),
-        )
-
-        ttk.Button(
-            button_frame,
-            text="Aplicar filtros",
-            command=self._load_data,
-        ).pack(
-            side=tk.LEFT,
-            padx=(0, 8),
-        )
-
-        ttk.Button(
-            button_frame,
-            text="Limpiar",
-            command=self._clear_filters,
-        ).pack(
-            side=tk.LEFT,
-        )
+        buttons = ttk.Frame(filters)
+        buttons.grid(row=3, column=2, sticky=tk.E, padx=(10, 0), pady=(4, 0))
+        ttk.Button(buttons, text="Aplicar", command=self._load_data).pack(side=tk.LEFT)
+        ttk.Button(buttons, text="Limpiar", command=self._clear_filters).pack(side=tk.LEFT, padx=(8, 0))
 
         for column in range(3):
-            filter_container.columnconfigure(
-                column,
-                weight=1,
-            )
+            filters.columnconfigure(column, weight=1)
 
-        for combobox in (
-            self.proveedor_filter,
-            self.aduana_filter,
-            self.estado_filter,
-            self.moneda_filter,
+        for combo in (
+            self.provider_filter,
+            self.customs_filter,
+            self.state_filter,
+            self.currency_filter,
         ):
-            combobox.bind(
-                "<<ComboboxSelected>>",
-                lambda _event: self._load_data(),
-            )
+            combo.bind("<<ComboboxSelected>>", lambda _event: self._load_data())
 
         table_frame = ttk.Frame(self)
-        table_frame.pack(
-            fill=tk.BOTH,
-            expand=True,
-        )
+        table_frame.pack(fill=tk.BOTH, expand=True)
+        table_frame.columnconfigure(0, weight=1)
+        table_frame.rowconfigure(0, weight=1)
 
         columns = (
             "id",
             "proveedor",
             "cuit",
             "aduana",
-            "fecha_inicio",
-            "fecha_fin",
+            "inicio",
+            "fin",
             "estado",
             "moneda",
             "zonas",
-            "camiones",
+            "tramos",
             "horario",
         )
 
@@ -318,496 +148,153 @@ class EsquemasCotizacionView(ttk.Frame):
             show="headings",
             selectmode="browse",
         )
+        self.table.grid(row=0, column=0, sticky="nsew")
+        self.table.bind("<Double-1>", lambda _event: self._primary_action())
 
         headings = {
             "id": "ID",
             "proveedor": "Proveedor",
             "cuit": "CUIT",
             "aduana": "Aduana",
-            "fecha_inicio": "Inicio",
-            "fecha_fin": "Fin",
+            "inicio": "Inicio",
+            "fin": "Fin",
             "estado": "Estado",
             "moneda": "Moneda",
             "zonas": "Zonas",
-            "camiones": "Tramos",
+            "tramos": "Tramos",
             "horario": "Horario",
         }
 
         for column, heading in headings.items():
-            self.table.heading(
-                column,
-                text=heading,
-            )
+            self.table.heading(column, text=heading)
 
-        self.table.column(
-            "id",
-            width=65,
-            minwidth=55,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
+        widths = {
+            "id": 65,
+            "proveedor": 240,
+            "cuit": 115,
+            "aduana": 170,
+            "inicio": 95,
+            "fin": 95,
+            "estado": 100,
+            "moneda": 75,
+            "zonas": 65,
+            "tramos": 70,
+            "horario": 80,
+        }
 
-        self.table.column(
-            "proveedor",
-            width=240,
-            minwidth=180,
-            anchor=tk.W,
-        )
+        for column, width in widths.items():
+            anchor = tk.W if column in ("proveedor", "aduana") else tk.CENTER
+            self.table.column(column, width=width, anchor=anchor, stretch=column in ("proveedor", "aduana"))
 
-        self.table.column(
-            "cuit",
-            width=118,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
+        ybar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.table.yview)
+        ybar.grid(row=0, column=1, sticky="ns")
+        xbar = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL, command=self.table.xview)
+        xbar.grid(row=1, column=0, sticky="ew")
+        self.table.configure(yscrollcommand=ybar.set, xscrollcommand=xbar.set)
 
-        self.table.column(
-            "aduana",
-            width=160,
-            minwidth=120,
-            anchor=tk.W,
-        )
+        actions = ttk.Frame(self)
+        actions.pack(fill=tk.X, pady=(12, 0))
 
-        self.table.column(
-            "fecha_inicio",
-            width=95,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
+        ttk.Button(actions, text="Actualizar", command=self._refresh_all).pack(side=tk.LEFT)
+        ttk.Button(actions, text="Continuar esquema", command=self._continue_quote).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Button(actions, text="Ver resumen", command=self._show_summary).pack(side=tk.LEFT, padx=(8, 0))
 
-        self.table.column(
-            "fecha_fin",
-            width=95,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
+        ttk.Button(actions, text="Editar cabecera", command=self._edit_quote).pack(side=tk.RIGHT)
+        ttk.Button(actions, text="Rechazar", command=self._reject_quote).pack(side=tk.RIGHT, padx=(0, 8))
+        ttk.Button(actions, text="Eliminar", command=self._delete_quote).pack(side=tk.RIGHT, padx=(0, 8))
 
-        self.table.column(
-            "estado",
-            width=100,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
-
-        self.table.column(
-            "moneda",
-            width=75,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
-
-        self.table.column(
-            "zonas",
-            width=65,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
-
-        self.table.column(
-            "camiones",
-            width=70,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
-
-        self.table.column(
-            "horario",
-            width=75,
-            anchor=tk.CENTER,
-            stretch=False,
-        )
-
-        vertical_scrollbar = ttk.Scrollbar(
-            table_frame,
-            orient=tk.VERTICAL,
-            command=self.table.yview,
-        )
-
-        horizontal_scrollbar = ttk.Scrollbar(
-            table_frame,
-            orient=tk.HORIZONTAL,
-            command=self.table.xview,
-        )
-
-        self.table.configure(
-            yscrollcommand=vertical_scrollbar.set,
-            xscrollcommand=horizontal_scrollbar.set,
-        )
-
-        self.table.grid(
-            row=0,
-            column=0,
-            sticky="nsew",
-        )
-
-        vertical_scrollbar.grid(
-            row=0,
-            column=1,
-            sticky="ns",
-        )
-
-        horizontal_scrollbar.grid(
-            row=1,
-            column=0,
-            sticky="ew",
-        )
-
-        table_frame.rowconfigure(
-            0,
-            weight=1,
-        )
-
-        table_frame.columnconfigure(
-            0,
-            weight=1,
-        )
-
-        self.table.bind(
-            "<Double-1>",
-            lambda _event: self._edit_quote(),
-        )
-
-        action_frame = ttk.Frame(self)
-        action_frame.pack(
-            fill=tk.X,
-            pady=(12, 0),
-        )
-
-        ttk.Button(
-            action_frame,
-            text="Actualizar listado",
-            command=self._refresh_all,
-        ).pack(
-            side=tk.LEFT,
-        )
-
-        ttk.Button(
-            action_frame,
-            text="Completar esquema",
-            command=self._complete_quote,
-        ).pack(
-            side=tk.LEFT,
-            padx=(8, 0),
-        )
-
-        ttk.Button(
-            action_frame,
-            text="Ver resumen",
-            command=self._show_summary,
-        ).pack(
-            side=tk.LEFT,
-            padx=(8, 0),
-        )
-
-        ttk.Button(
-            action_frame,
-            text="Editar",
-            command=self._edit_quote,
-        ).pack(
-            side=tk.RIGHT,
-        )
-
-        ttk.Button(
-            action_frame,
-            text="Rechazar",
-            command=self._reject_quote,
-        ).pack(
-            side=tk.RIGHT,
-            padx=(0, 8),
-        )
-
-        ttk.Button(
-            action_frame,
-            text="Eliminar",
-            command=self._delete_quote,
-        ).pack(
-            side=tk.RIGHT,
-            padx=(0, 8),
-        )
-
-        self.status_label = ttk.Label(
-            self,
-            text="",
-        )
-        self.status_label.pack(
-            fill=tk.X,
-            pady=(10, 0),
-        )
+        self.status_label = ttk.Label(self, text="")
+        self.status_label.pack(fill=tk.X, pady=(10, 0))
 
     def _load_filter_values(self) -> None:
         try:
-            proveedores = (
-                self.service.listar_proveedores()
-            )
-
+            providers = self.service.listar_proveedores()
         except ApplicationError as exc:
-            messagebox.showwarning(
-                title="No se pudieron cargar los filtros",
-                message=str(exc),
-                parent=self,
-            )
+            messagebox.showwarning(title="No se pudieron cargar los filtros", message=str(exc), parent=self)
             return
 
-        current_provider = (
-            self.proveedor_filtro_var.get()
-        )
+        current_provider = self.provider_filter_var.get()
+        current_customs = self.customs_filter_var.get()
+        self.provider_by_label.clear()
+        self.customs_by_label.clear()
 
-        current_customs_office = (
-            self.aduana_filtro_var.get()
-        )
+        provider_values = [self.ALL_PROVIDERS]
+        customs_values = [self.ALL_CUSTOMS]
+        seen_customs = set()
 
-        self.proveedor_por_descripcion.clear()
-        self.aduana_por_descripcion.clear()
+        for provider in providers:
+            provider_label = f"{provider.razon_social} | {provider.cuit}"
+            provider_values.append(provider_label)
+            self.provider_by_label[provider_label] = provider
 
-        provider_values = [
-            self.ALL_PROVIDERS
-        ]
+            customs = provider.aduana
+            if customs.aduana_id not in seen_customs:
+                seen_customs.add(customs.aduana_id)
+                customs_label = f"{customs.codigo} - {customs.nombre}"
+                customs_values.append(customs_label)
+                self.customs_by_label[customs_label] = customs
 
-        customs_office_values = [
-            self.ALL_CUSTOMS_OFFICES
-        ]
-
-        customs_office_seen: set[int] = set()
-
-        for proveedor in proveedores:
-            provider_description = (
-                f"{proveedor.razon_social} "
-                f"| {proveedor.cuit}"
-            )
-
-            provider_values.append(
-                provider_description
-            )
-
-            self.proveedor_por_descripcion[
-                provider_description
-            ] = proveedor
-
-            aduana = proveedor.aduana
-
-            if aduana.aduana_id not in customs_office_seen:
-                customs_office_seen.add(
-                    aduana.aduana_id
-                )
-
-                customs_description = (
-                    f"{aduana.codigo} - "
-                    f"{aduana.nombre}"
-                )
-
-                customs_office_values.append(
-                    customs_description
-                )
-
-                self.aduana_por_descripcion[
-                    customs_description
-                ] = aduana
-
-        self.proveedor_filter.configure(
-            values=provider_values
-        )
-
-        self.aduana_filter.configure(
-            values=customs_office_values
-        )
-
-        if current_provider in provider_values:
-            self.proveedor_filtro_var.set(
-                current_provider
-            )
-        else:
-            self.proveedor_filtro_var.set(
-                self.ALL_PROVIDERS
-            )
-
-        if current_customs_office in customs_office_values:
-            self.aduana_filtro_var.set(
-                current_customs_office
-            )
-        else:
-            self.aduana_filtro_var.set(
-                self.ALL_CUSTOMS_OFFICES
-            )
-
-    def _selected_provider_filter(
-        self,
-    ) -> int | None:
-        description = (
-            self.proveedor_filtro_var.get()
-        )
-
-        if description == self.ALL_PROVIDERS:
-            return None
-
-        proveedor = self.proveedor_por_descripcion.get(
-            description
-        )
-
-        if proveedor is None:
-            return None
-
-        return proveedor.proveedor_id
-
-    def _selected_customs_office_filter(
-        self,
-    ) -> int | None:
-        description = (
-            self.aduana_filtro_var.get()
-        )
-
-        if description == self.ALL_CUSTOMS_OFFICES:
-            return None
-
-        aduana = self.aduana_por_descripcion.get(
-            description
-        )
-
-        if aduana is None:
-            return None
-
-        return aduana.aduana_id
-
-    def _selected_state_filter(
-        self,
-    ) -> str | None:
-        estado = self.estado_filtro_var.get()
-
-        if estado == self.ALL_STATES:
-            return None
-
-        return estado
-
-    def _selected_currency_filter(
-        self,
-    ) -> str | None:
-        moneda = self.moneda_filtro_var.get()
-
-        if moneda == self.ALL_CURRENCIES:
-            return None
-
-        return moneda
+        self.provider_filter.configure(values=provider_values)
+        self.customs_filter.configure(values=customs_values)
+        self.provider_filter_var.set(current_provider if current_provider in provider_values else self.ALL_PROVIDERS)
+        self.customs_filter_var.set(current_customs if current_customs in customs_values else self.ALL_CUSTOMS)
 
     def _load_data(self) -> None:
+        provider = self.provider_by_label.get(self.provider_filter_var.get())
+        customs = self.customs_by_label.get(self.customs_filter_var.get())
+        state = self.state_filter_var.get()
+        currency = self.currency_filter_var.get()
+
         try:
-            esquemas = self.service.listar(
-                busqueda=self.busqueda_var.get(),
-                proveedor_id=(
-                    self._selected_provider_filter()
-                ),
-                aduana_id=(
-                    self
-                    ._selected_customs_office_filter()
-                ),
-                estado=(
-                    self._selected_state_filter()
-                ),
-                moneda_codigo=(
-                    self._selected_currency_filter()
-                ),
+            schemes = self.service.listar(
+                busqueda=self.search_var.get(),
+                proveedor_id=provider.proveedor_id if provider else None,
+                aduana_id=customs.aduana_id if customs else None,
+                estado=None if state == self.ALL_STATES else state,
+                moneda_codigo=None if currency == self.ALL_CURRENCIES else currency,
             )
-
         except ApplicationError as exc:
-            messagebox.showwarning(
-                title="No se pudo consultar",
-                message=str(exc),
-                parent=self,
-            )
+            messagebox.showwarning(title="No se pudo consultar", message=str(exc), parent=self)
             return
-
         except Exception as exc:
-            messagebox.showerror(
-                title="Error inesperado",
-                message=(
-                    "No se pudo recuperar el listado "
-                    "de esquemas.\n\n"
-                    f"Detalle técnico:\n{exc}"
-                ),
-                parent=self,
-            )
+            messagebox.showerror(title="Error inesperado", message=f"No se pudo recuperar el listado.\n\n{exc}", parent=self)
             return
 
-        self._clear_table()
-
-        for esquema in esquemas:
-            proveedor = esquema.proveedor
-            aduana = proveedor.aduana
-
-            fecha_fin = (
-                esquema.fecha_fin.strftime(
-                    "%d/%m/%Y"
-                )
-                if esquema.fecha_fin
-                else ""
-            )
-
-            horario = (
-                "Sí"
-                if esquema.utiliza_adicional_horario
-                else "No"
-            )
-
-            self.table.insert(
-                "",
-                tk.END,
-                iid=str(
-                    esquema.esquema_cotizacion_id
-                ),
-                values=(
-                    esquema.esquema_cotizacion_id,
-                    proveedor.razon_social,
-                    proveedor.cuit,
-                    (
-                        f"{aduana.codigo} - "
-                        f"{aduana.nombre}"
-                    ),
-                    esquema.fecha_inicio.strftime(
-                        "%d/%m/%Y"
-                    ),
-                    fecha_fin,
-                    esquema.estado,
-                    esquema.moneda_codigo,
-                    len(esquema.zonas),
-                    len(
-                        esquema.adicionales_camiones
-                    ),
-                    horario,
-                ),
-            )
-
-        cantidad = len(esquemas)
-
-        self.status_label.configure(
-            text=(
-                f"{cantidad} "
-                f"{'esquema' if cantidad == 1 else 'esquemas'}"
-            )
-        )
-
-    def _clear_table(self) -> None:
         children = self.table.get_children()
-
         if children:
             self.table.delete(*children)
 
+        for scheme in schemes:
+            provider = scheme.proveedor
+            customs = provider.aduana
+            self.table.insert(
+                "",
+                tk.END,
+                iid=str(scheme.esquema_cotizacion_id),
+                values=(
+                    scheme.esquema_cotizacion_id,
+                    provider.razon_social,
+                    provider.cuit,
+                    f"{customs.codigo} - {customs.nombre}",
+                    scheme.fecha_inicio.strftime("%d/%m/%Y"),
+                    scheme.fecha_fin.strftime("%d/%m/%Y") if scheme.fecha_fin else "",
+                    scheme.estado,
+                    scheme.moneda_codigo,
+                    len(scheme.zonas),
+                    len(scheme.adicionales_camiones),
+                    "Sí" if scheme.tarifas_adicionales_dia_hora else "No",
+                ),
+            )
+
+        count = len(schemes)
+        self.status_label.configure(text=f"{count} {'esquema' if count == 1 else 'esquemas'}")
+
     def _clear_filters(self) -> None:
-        self.busqueda_var.set("")
-
-        self.proveedor_filtro_var.set(
-            self.ALL_PROVIDERS
-        )
-
-        self.aduana_filtro_var.set(
-            self.ALL_CUSTOMS_OFFICES
-        )
-
-        self.estado_filtro_var.set(
-            self.ALL_STATES
-        )
-
-        self.moneda_filtro_var.set(
-            self.ALL_CURRENCIES
-        )
-
+        self.search_var.set("")
+        self.provider_filter_var.set(self.ALL_PROVIDERS)
+        self.customs_filter_var.set(self.ALL_CUSTOMS)
+        self.state_filter_var.set(self.ALL_STATES)
+        self.currency_filter_var.set(self.ALL_CURRENCIES)
         self._load_data()
 
     def _refresh_all(self) -> None:
@@ -816,214 +303,97 @@ class EsquemasCotizacionView(ttk.Frame):
 
     def _selected_id(self) -> int | None:
         selected = self.table.selection()
-
         if not selected:
-            messagebox.showinfo(
-                title="Seleccionar esquema",
-                message=(
-                    "Selecciona un esquema "
-                    "del listado."
-                ),
-                parent=self,
-            )
+            messagebox.showinfo(title="Seleccionar esquema", message="Selecciona un esquema del listado.", parent=self)
             return None
-
         return int(selected[0])
 
-    def _new_quote(self) -> None:
-        proveedores = (
-            self.service.listar_proveedores()
-        )
+    def _selected_scheme(self):
+        scheme_id = self._selected_id()
+        if scheme_id is None:
+            return None
+        try:
+            return self.service.obtener(scheme_id)
+        except ApplicationError as exc:
+            messagebox.showwarning(title="No se pudo abrir", message=str(exc), parent=self)
+            return None
 
-        if not proveedores:
-            messagebox.showwarning(
-                title="No hay proveedores",
-                message=(
-                    "Antes de crear un esquema "
-                    "debes registrar al menos "
-                    "un proveedor."
-                ),
+    def _new_quote(self) -> None:
+        providers = self.service.listar_proveedores()
+        if not providers:
+            messagebox.showwarning(title="No hay proveedores", message="Registra al menos un proveedor antes de crear un esquema.", parent=self)
+            return
+
+        wizard = EsquemaWizardWindow(parent=self)
+        self.wait_window(wizard)
+        if wizard.resultado_guardado:
+            self._refresh_all()
+
+    def _continue_quote(self) -> None:
+        scheme = self._selected_scheme()
+        if scheme is None:
+            return
+        if scheme.estado != "BORRADOR":
+            messagebox.showinfo(
+                title="Esquema de solo lectura",
+                message="Solo los esquemas BORRADOR pueden continuar en el asistente. Usa Ver resumen.",
                 parent=self,
             )
             return
+        wizard = EsquemaWizardWindow(parent=self, esquema_cotizacion_id=scheme.esquema_cotizacion_id)
+        self.wait_window(wizard)
+        self._refresh_all()
 
-        dialog = EsquemaCotizacionDialog(
-            parent=self,
-            service=self.service,
-        )
+    def _primary_action(self) -> None:
+        scheme = self._selected_scheme()
+        if scheme is None:
+            return
+        if scheme.estado == "BORRADOR":
+            self._continue_quote()
+        else:
+            self._show_summary()
 
-        self.wait_window(dialog)
-
-        if dialog.resultado_guardado:
-            self._refresh_all()
+    def _show_summary(self) -> None:
+        scheme_id = self._selected_id()
+        if scheme_id is None:
+            return
+        window = ResumenEsquemaWindow(parent=self, esquema_cotizacion_id=scheme_id)
+        self.wait_window(window)
 
     def _edit_quote(self) -> None:
-        esquema_id = self._selected_id()
-
-        if esquema_id is None:
+        scheme = self._selected_scheme()
+        if scheme is None:
             return
-
-        try:
-            esquema = self.service.obtener(
-                esquema_id
-            )
-
-            if esquema.estado != "BORRADOR":
-                messagebox.showinfo(
-                    title="Esquema no editable",
-                    message=(
-                        "Solo los esquemas en estado "
-                        "BORRADOR pueden modificarse."
-                    ),
-                    parent=self,
-                )
-                return
-
-        except ApplicationError as exc:
-            messagebox.showwarning(
-                title="No se pudo abrir",
-                message=str(exc),
-                parent=self,
-            )
+        if scheme.estado != "BORRADOR":
+            messagebox.showinfo(title="Esquema no editable", message="Solo los borradores pueden editarse.", parent=self)
             return
-
-        dialog = EsquemaCotizacionDialog(
-            parent=self,
-            service=self.service,
-            esquema=esquema,
-        )
-
-        self.wait_window(dialog)
-
-        if dialog.resultado_guardado:
-            self._refresh_all()
+        wizard = EsquemaWizardWindow(parent=self, esquema_cotizacion_id=scheme.esquema_cotizacion_id)
+        wizard._show_step(0)
+        self.wait_window(wizard)
+        self._refresh_all()
 
     def _reject_quote(self) -> None:
-        esquema_id = self._selected_id()
-
-        if esquema_id is None:
+        scheme = self._selected_scheme()
+        if scheme is None:
             return
-
-        confirmed = messagebox.askyesno(
-            title="Rechazar esquema",
-            message=(
-                "¿Deseas rechazar el esquema "
-                f"{esquema_id}?\n\n"
-                "Después del rechazo ya no podrá "
-                "editarse ni eliminarse."
-            ),
-            parent=self,
-        )
-
-        if not confirmed:
+        if not messagebox.askyesno(title="Rechazar esquema", message=f"¿Rechazar el esquema {scheme.esquema_cotizacion_id}?", parent=self):
             return
-
         try:
-            self.service.rechazar(
-                esquema_id
-            )
-
+            self.service.rechazar(scheme.esquema_cotizacion_id)
         except ApplicationError as exc:
-            messagebox.showwarning(
-                title="No se pudo rechazar",
-                message=str(exc),
-                parent=self,
-            )
+            messagebox.showwarning(title="No se pudo rechazar", message=str(exc), parent=self)
             return
-
         self._load_data()
 
     def _delete_quote(self) -> None:
-        esquema_id = self._selected_id()
-
-        if esquema_id is None:
+        scheme = self._selected_scheme()
+        if scheme is None:
             return
-
-        confirmed = messagebox.askyesno(
-            title="Eliminar esquema",
-            message=(
-                "¿Deseas eliminar el esquema "
-                f"{esquema_id}?\n\n"
-                "Solo pueden eliminarse borradores. "
-                "También se eliminarán sus datos "
-                "dependientes."
-            ),
-            parent=self,
-        )
-
-        if not confirmed:
+        if not messagebox.askyesno(title="Eliminar esquema", message=f"¿Eliminar el borrador {scheme.esquema_cotizacion_id} y todos sus datos?", parent=self):
             return
-
         try:
-            self.service.eliminar(
-                esquema_id
-            )
-
+            self.service.eliminar(scheme.esquema_cotizacion_id)
         except ApplicationError as exc:
-            messagebox.showwarning(
-                title="No se pudo eliminar",
-                message=str(exc),
-                parent=self,
-            )
+            messagebox.showwarning(title="No se pudo eliminar", message=str(exc), parent=self)
             return
-
-        self._load_data()
-
-        messagebox.showinfo(
-            title="Esquema eliminado",
-            message=(
-                "El esquema se eliminó correctamente."
-            ),
-            parent=self,
-        )
-
-    def _complete_quote(self) -> None:
-        esquema_id = self._selected_id()
-
-        if esquema_id is None:
-            return
-
-        try:
-            esquema = self.service.obtener(
-                esquema_id
-            )
-
-        except ApplicationError as exc:
-            messagebox.showwarning(
-                title="No se pudo abrir",
-                message=str(exc),
-                parent=self,
-            )
-            return
-        
-        if esquema.estado != "BORRADOR":
-            messagebox.showinfo(
-                title="Esquema no editable",
-                message=(
-                    "Solo los esquemas en estado "
-                    "BORRADOR pueden completarse."
-                ),
-                parent=self,
-            )
-            return
-        
-        window = CompletarEsquemaWindow(
-            parent=self,
-            esquema_cotizacion_id=esquema_id,
-        )
-
-        self.wait_window(window)
         self._refresh_all()
-
-    def _show_summary(self) -> None:
-        esquema_id = self._selected_id()
-
-        if esquema_id is None:
-            return
-
-        window = ResumenEsquemaWindow(
-            parent=self,
-            esquema_cotizacion_id=esquema_id,
-        )
-
-        self.wait_window(window)
