@@ -277,6 +277,31 @@ class EsquemaCotizacionService:
                 "No se pudo modificar el esquema de cotización."
             ) from exc
 
+    def aprobar(
+        self,
+        esquema_cotizacion_id: int,
+    ) -> EsquemaCotizacion:
+        """Aprueba un borrador si cumple la integridad estructural mínima."""
+        self._validar_id(
+            esquema_cotizacion_id,
+            "esquema de cotización",
+        )
+        with session_scope() as session:
+            repository = EsquemaCotizacionRepository(session)
+            esquema = repository.obtener_por_id(esquema_cotizacion_id)
+            if esquema is None:
+                raise NotFoundError(
+                    "El esquema que se intenta aprobar no existe."
+                )
+            self._validar_editable(esquema)
+            self._validar_aprobable(esquema)
+            esquema = repository.cambiar_estado(
+                esquema=esquema,
+                estado="APROBADO",
+            )
+            session.expunge_all()
+            return esquema
+
     def rechazar(
         self,
         esquema_cotizacion_id: int,
@@ -362,6 +387,25 @@ class EsquemaCotizacionService:
             session.expunge_all()
 
             return proveedores
+
+    @classmethod
+    def _validar_aprobable(
+        cls,
+        esquema: EsquemaCotizacion,
+    ) -> None:
+        """Valida condiciones estructurales mínimas para aprobar."""
+        if not esquema.zonas:
+            raise BusinessRuleError(
+                "El esquema debe tener al menos una zona para aprobarse."
+            )
+        cantidad_horaria = len(
+            esquema.tarifas_adicionales_dia_hora
+        )
+        if cantidad_horaria not in (0, 168):
+            raise BusinessRuleError(
+                "La configuración horaria debe tener 0 o 168 "
+                "posiciones antes de aprobar el esquema."
+            )
 
     @staticmethod
     def _validar_editable(

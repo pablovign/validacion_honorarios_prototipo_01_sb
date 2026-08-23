@@ -141,11 +141,18 @@ class EsquemaWizardWindow(tk.Toplevel):
         )
         self.footer_message.grid(row=0, column=2, sticky="w", padx=(18, 0))
 
-        ttk.Button(
+        self.approve_button = ttk.Button(
+            footer,
+            text="Aprobar esquema",
+            command=self._approve,
+        )
+        self.approve_button.grid(row=0, column=3, padx=(8, 0))
+        self.close_button = ttk.Button(
             footer,
             text="Guardar borrador y cerrar",
             command=self._close,
-        ).grid(row=0, column=3, padx=(8, 0))
+        )
+        self.close_button.grid(row=0, column=4, padx=(8, 0))
 
     def _build_steps(self) -> None:
         self.general_step = GeneralStep(
@@ -239,25 +246,48 @@ class EsquemaWizardWindow(tk.Toplevel):
 
     def _update_navigation(self) -> None:
         for index, button in enumerate(self.step_buttons):
-            allowed = self.esquema_cotizacion_id is not None or index == 0
+            if self.esquema is not None and self.esquema.estado != "BORRADOR":
+                allowed = index == len(self.steps) - 1
+            else:
+                allowed = self.esquema_cotizacion_id is not None or index == 0
             button.configure(state=tk.NORMAL if allowed else tk.DISABLED)
 
+        back_enabled = (
+            self.current_step > 0
+            and (self.esquema is None or self.esquema.estado == "BORRADOR")
+        )
         self.back_button.configure(
-            state=tk.DISABLED if self.current_step == 0 else tk.NORMAL
+            state=tk.NORMAL if back_enabled else tk.DISABLED
         )
 
         if self.current_step == 0:
+            self.next_button.grid()
             self.next_button.configure(
-                text=(
-                    "Guardar y continuar"
-                    if self.editable
-                    else "Siguiente"
-                )
+                text="Guardar y continuar" if self.editable else "Siguiente"
             )
         elif self.current_step == len(self.steps) - 1:
-            self.next_button.configure(text="Guardar borrador y cerrar")
+            self.next_button.grid_remove()
         else:
+            self.next_button.grid()
             self.next_button.configure(text="Siguiente")
+
+        approve_visible = (
+            self.current_step == len(self.steps) - 1
+            and self.esquema is not None
+            and self.esquema.estado == "BORRADOR"
+        )
+        if approve_visible:
+            self.approve_button.grid()
+        else:
+            self.approve_button.grid_remove()
+
+        self.close_button.configure(
+            text=(
+                "Guardar borrador y cerrar"
+                if self.esquema is None or self.esquema.estado == "BORRADOR"
+                else "Cerrar"
+            )
+        )
 
     def _back(self) -> None:
         if self.current_step > 0:
@@ -272,6 +302,44 @@ class EsquemaWizardWindow(tk.Toplevel):
             self._show_step(self.current_step + 1)
         else:
             self._close()
+
+    def _approve(self) -> None:
+        if self.esquema_cotizacion_id is None:
+            return
+        confirmed = messagebox.askyesno(
+            title="Aprobar esquema",
+            message=(
+                "Al aprobar, el esquema dejará de ser editable.\n\n"
+                "Las combinaciones sin tarifa continuarán como "
+                "advertencias informativas.\n\n"
+                "¿Deseas continuar?"
+            ),
+            parent=self,
+        )
+        if not confirmed:
+            return
+        try:
+            self.esquema_service.aprobar(self.esquema_cotizacion_id)
+        except ApplicationError as exc:
+            messagebox.showwarning(
+                title="No se pudo aprobar",
+                message=str(exc),
+                parent=self,
+            )
+            self.review_step.refresh()
+            return
+        self.resultado_guardado = True
+        self._load_scheme()
+        self.review_step.refresh()
+        self._update_navigation()
+        messagebox.showinfo(
+            title="Esquema aprobado",
+            message=(
+                "El esquema fue aprobado y quedó disponible "
+                "en modo de solo lectura."
+            ),
+            parent=self,
+        )
 
     def _close(self) -> None:
         if self.esquema_cotizacion_id is None:
@@ -666,9 +734,18 @@ class ZonesTariffsStep(WizardStep):
         self.selected_channel_id = channel.canal_selectividad_id
         self.selection_var.set(f"Seleccionada: {zone.nombre} × {channel.nombre}")
 
-    def _table_double_click(self, event) -> None:
-        self._table_click(event)
-        self.edit_tariff()
+    def _table_double_click(self, event) -> str:
+        selection = self._selection_from_event(event)
+        if selection is None:
+            return "break"
+        zone, channel = selection
+        self.selected_zone_id = zone.zona_id
+        self.selected_channel_id = channel.canal_selectividad_id
+        self.selection_var.set(
+            f"Seleccionada: {zone.nombre} × {channel.nombre}"
+        )
+        self.after_idle(self.edit_tariff)
+        return "break"
 
     def _current_selection(self):
         zone = self.zone_by_id.get(self.selected_zone_id)
@@ -869,9 +946,18 @@ class TrucksStep(WizardStep):
         self.selected_zone_id = zone.zona_id
         self.selection_var.set(f"Seleccionada: {tramo.descripcion_rango} × {zone.nombre}")
 
-    def _table_double_click(self, event) -> None:
-        self._table_click(event)
-        self.edit_tariff()
+    def _table_double_click(self, event) -> str:
+        selection = self._selection_from_event(event)
+        if selection is None:
+            return "break"
+        tramo, zone = selection
+        self.selected_tramo_id = tramo.adicional_camiones_id
+        self.selected_zone_id = zone.zona_id
+        self.selection_var.set(
+            f"Seleccionada: {tramo.descripcion_rango} × {zone.nombre}"
+        )
+        self.after_idle(self.edit_tariff)
+        return "break"
 
     def _current_selection(self):
         tramo = self.tramo_by_id.get(self.selected_tramo_id)
@@ -1108,6 +1194,7 @@ class ScheduleStep(WizardStep):
         )
         self.wizard.wait_window(dialog)
         if dialog.resultado_guardado:
+            self.selected_ids.clear()
             self.refresh()
 
     def reset_amount(self) -> None:
@@ -1121,6 +1208,7 @@ class ScheduleStep(WizardStep):
         except ApplicationError as exc:
             messagebox.showwarning(title="No se pudo restablecer", message=str(exc), parent=self.wizard)
             return
+        self.selected_ids.clear()
         self.refresh()
 
     def _refresh_labels(self) -> None:

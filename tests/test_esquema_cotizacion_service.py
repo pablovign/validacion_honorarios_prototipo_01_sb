@@ -180,3 +180,40 @@ def test_impide_editar_esquema_no_borrador() -> None:
         EsquemaCotizacionService._validar_editable(
             EsquemaFalso()
         )
+
+class EsquemaAprobableFalso:
+    estado = "BORRADOR"
+    zonas = [object()]
+    tarifas_adicionales_dia_hora = []
+
+
+class EsquemaSinZonasFalso:
+    estado = "BORRADOR"
+    zonas = []
+    tarifas_adicionales_dia_hora = []
+
+
+class EsquemaHorarioIncompletoFalso:
+    estado = "BORRADOR"
+    zonas = [object()]
+    tarifas_adicionales_dia_hora = [object()]
+
+
+def test_permite_aprobar_integridad_minima() -> None:
+    EsquemaCotizacionService._validar_aprobable(
+        EsquemaAprobableFalso()
+    )
+
+
+def test_impide_aprobar_sin_zonas() -> None:
+    with pytest.raises(BusinessRuleError):
+        EsquemaCotizacionService._validar_aprobable(
+            EsquemaSinZonasFalso()
+        )
+
+
+def test_impide_aprobar_configuracion_horaria_incompleta() -> None:
+    with pytest.raises(BusinessRuleError):
+        EsquemaCotizacionService._validar_aprobable(
+            EsquemaHorarioIncompletoFalso()
+        )
