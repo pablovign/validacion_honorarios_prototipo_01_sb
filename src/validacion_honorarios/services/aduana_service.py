@@ -20,7 +20,6 @@ CODIGO_ADUANA_PATTERN = re.compile(
     r"^[0-9]{3}$"
 )
 
-
 class AduanaService:
     """Casos de uso y validaciones de Aduanas."""
 
