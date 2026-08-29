@@ -48,8 +48,10 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_PRIMARY,
     FONT_FAMILY,
     apply_global_ttk_theme,
+    apply_treeview_row_tags,
     style_treeview,
 )
+
 
 
 class EsquemaWizardWindow(ctk.CTkToplevel):
@@ -750,13 +752,17 @@ class ZonesTariffsStep(WizardStep):
         if children:
             self.table.delete(*children)
 
-        for zone in self.zones:
+        apply_treeview_row_tags(self.table)
+
+        for idx, zone in enumerate(self.zones):
             tariffs = {item.canal_selectividad_id: item for item in zone.tarifas_por_canal}
             values = [zone.nombre]
             for channel in self.channels:
                 tariff = tariffs.get(channel.canal_selectividad_id)
                 values.append(self.format_amount(tariff.monto) if tariff else "")
-            self.table.insert("", tk.END, iid=str(zone.zona_id), values=values)
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            self.table.insert("", tk.END, iid=str(zone.zona_id), values=values, tags=(tag,))
+
 
     def new_zone(self) -> None:
         if not self.wizard.editable:
@@ -982,13 +988,16 @@ class TrucksStep(WizardStep):
         children = self.table.get_children()
         if children:
             self.table.delete(*children)
-        for tramo in self.tramos:
+        apply_treeview_row_tags(self.table)
+        for idx, tramo in enumerate(self.tramos):
             tariffs = {item.zona_id: item for item in tramo.tarifas_por_zona}
             values = [tramo.descripcion_rango]
             for zone in self.zones:
                 tariff = tariffs.get(zone.zona_id)
                 values.append(self.format_amount(tariff.monto) if tariff else "")
-            self.table.insert("", tk.END, iid=str(tramo.adicional_camiones_id), values=values)
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            self.table.insert("", tk.END, iid=str(tramo.adicional_camiones_id), values=values, tags=(tag,))
+
 
     def new_tramo(self) -> None:
         dialog = TramoCamionesDialog(parent=self.wizard, service=self.wizard.camiones_service, esquema_cotizacion_id=self.wizard.esquema_cotizacion_id)
@@ -1195,6 +1204,7 @@ class ScheduleStep(WizardStep):
         children = self.table.get_children()
         if children:
             self.table.delete(*children)
+        apply_treeview_row_tags(self.table)
         for day in range(1, 8):
             values = [self.DAYS[day]]
             for hour in range(24):
@@ -1205,7 +1215,9 @@ class ScheduleStep(WizardStep):
                 else:
                     value = self.format_amount(tariff.monto)
                     values.append(f"[{value}]" if position.dia_hora_id in self.selected_ids else value)
-            self.table.insert("", tk.END, iid=f"dia_{day}", values=values)
+            tag = "evenrow" if day % 2 == 0 else "oddrow"
+            self.table.insert("", tk.END, iid=f"dia_{day}", values=values, tags=(tag,))
+
 
     def _table_click(self, event) -> None:
         if self.table.identify_region(event.x, event.y) != "cell":

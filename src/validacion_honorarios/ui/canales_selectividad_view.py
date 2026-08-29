@@ -22,6 +22,7 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     FONT_FAMILY,
+    apply_treeview_row_tags,
     style_treeview,
 )
 
@@ -238,19 +239,23 @@ class CanalesSelectividadView(ctk.CTkFrame):
             return
 
         self._clear_table()
+        apply_treeview_row_tags(self.table)
 
-        for canal in canales:
+        for idx, canal in enumerate(canales):
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
             self.table.insert(
                 "",
                 tk.END,
                 iid=str(canal.canal_selectividad_id),
                 values=(canal.canal_selectividad_id, canal.nombre),
+                tags=(tag,),
             )
 
         count = len(canales)
         self.status_label.configure(
             text=f"Total: {count} {'canal' if count == 1 else 'canales'} encontrados"
         )
+
 
     def _clear_table(self) -> None:
         children = self.table.get_children()

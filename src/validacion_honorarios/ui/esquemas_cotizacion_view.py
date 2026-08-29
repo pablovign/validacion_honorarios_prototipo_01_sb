@@ -28,6 +28,7 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_PRIMARY,
     COLOR_WARNING,
     FONT_FAMILY,
+    apply_treeview_row_tags,
     style_treeview,
 )
 
@@ -453,9 +454,12 @@ class EsquemasCotizacionView(ctk.CTkFrame):
         if children:
             self.table.delete(*children)
 
-        for scheme in schemes:
+        apply_treeview_row_tags(self.table)
+
+        for idx, scheme in enumerate(schemes):
             provider_obj = scheme.proveedor
             customs_obj = provider_obj.aduana
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
             self.table.insert(
                 "",
                 tk.END,
@@ -473,9 +477,11 @@ class EsquemasCotizacionView(ctk.CTkFrame):
                     len(scheme.adicionales_camiones),
                     "Sí" if scheme.tarifas_adicionales_dia_hora else "No",
                 ),
+                tags=(tag,),
             )
 
         count = len(schemes)
+
         self.status_label.configure(text=f"Total: {count} {'esquema' if count == 1 else 'esquemas'} encontrados")
 
     def _clear_filters(self) -> None:

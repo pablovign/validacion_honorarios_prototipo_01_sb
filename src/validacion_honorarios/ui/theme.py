@@ -238,15 +238,16 @@ def apply_global_ttk_theme(style: ttk.Style | None = None) -> ttk.Style:
         foreground=[("selected", "#FFFFFF"), ("active", "#FFFFFF")],
     )
 
-    # 8. Tablas Treeview
+    # 8. Tablas Treeview (Modern Data Grid con divisores y filas confortables de 32px)
     style.configure(
         "Treeview",
         background=bg_surface,
         foreground=fg_text,
         fieldbackground=bg_surface,
         bordercolor=border_color,
-        borderwidth=0,
-        font=(FONT_FAMILY, 10),
+        borderwidth=1,
+        relief="solid",
+        font=(FONT_FAMILY, 11),
         rowheight=32,
     )
     style.map(
@@ -256,16 +257,16 @@ def apply_global_ttk_theme(style: ttk.Style | None = None) -> ttk.Style:
     )
     style.configure(
         "Treeview.Heading",
-        background="#0B0F19" if is_dark else "#E2E8F0",
+        background="#0F172A" if is_dark else "#E2E8F0",
         foreground=fg_text,
-        font=(FONT_FAMILY, 10, "bold"),
+        font=(FONT_FAMILY, 11, "bold"),
         borderwidth=1,
-        relief="flat",
-        padding=(8, 6),
+        relief="solid",
+        padding=(10, 8),
     )
     style.map(
         "Treeview.Heading",
-        background=[("active", "#1E293B" if is_dark else "#CBD5E1")],
+        background=[("active", "#334155" if is_dark else "#CBD5E1")],
     )
 
     style.configure(
@@ -274,8 +275,9 @@ def apply_global_ttk_theme(style: ttk.Style | None = None) -> ttk.Style:
         foreground=fg_text,
         fieldbackground=bg_surface,
         bordercolor=border_color,
-        borderwidth=0,
-        font=(FONT_FAMILY, 10),
+        borderwidth=1,
+        relief="solid",
+        font=(FONT_FAMILY, 11),
         rowheight=32,
     )
     style.map(
@@ -285,16 +287,16 @@ def apply_global_ttk_theme(style: ttk.Style | None = None) -> ttk.Style:
     )
     style.configure(
         "Custom.Treeview.Heading",
-        background="#0B0F19" if is_dark else "#E2E8F0",
+        background="#0F172A" if is_dark else "#E2E8F0",
         foreground=fg_text,
-        font=(FONT_FAMILY, 10, "bold"),
+        font=(FONT_FAMILY, 11, "bold"),
         borderwidth=1,
-        relief="flat",
-        padding=(8, 6),
+        relief="solid",
+        padding=(10, 8),
     )
     style.map(
         "Custom.Treeview.Heading",
-        background=[("active", "#1E293B" if is_dark else "#CBD5E1")],
+        background=[("active", "#334155" if is_dark else "#CBD5E1")],
     )
 
     # 9. Scrollbars
@@ -318,6 +320,20 @@ def apply_global_ttk_theme(style: ttk.Style | None = None) -> ttk.Style:
     return style
 
 
+def apply_treeview_row_tags(tree: ttk.Treeview) -> None:
+    """Aplica colores alternados (zebra striping) con contraste y líneas de grilla suaves a una tabla."""
+    mode = ctk.get_appearance_mode()
+    is_dark = mode == "Dark"
+
+    bg_even = "#1E293B" if is_dark else "#FFFFFF"
+    bg_odd = "#152033" if is_dark else "#F1F5F9"
+    fg_text = "#F8FAFC" if is_dark else "#0F172A"
+
+    tree.tag_configure("evenrow", background=bg_even, foreground=fg_text)
+    tree.tag_configure("oddrow", background=bg_odd, foreground=fg_text)
+
+
 def style_treeview(style: ttk.Style | None = None) -> ttk.Style:
     """Alias para aplicar el tema global."""
     return apply_global_ttk_theme(style)
+

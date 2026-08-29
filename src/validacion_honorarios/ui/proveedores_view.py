@@ -23,6 +23,7 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     FONT_FAMILY,
+    apply_treeview_row_tags,
     style_treeview,
 )
 
@@ -323,9 +324,11 @@ class ProveedoresView(ctk.CTkFrame):
             return
 
         self._clear_table()
+        apply_treeview_row_tags(self.table)
 
-        for proveedor in proveedores:
+        for idx, proveedor in enumerate(proveedores):
             aduana = proveedor.aduana
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
             self.table.insert(
                 "",
                 tk.END,
@@ -336,12 +339,14 @@ class ProveedoresView(ctk.CTkFrame):
                     aduana.codigo,
                     aduana.nombre,
                 ),
+                tags=(tag,),
             )
 
         cantidad = len(proveedores)
         self.status_label.configure(
             text=f"Total: {cantidad} {'proveedor' if cantidad == 1 else 'proveedores'} encontrados"
         )
+
 
     def _clear_table(self) -> None:
         children = self.table.get_children()

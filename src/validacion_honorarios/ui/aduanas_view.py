@@ -22,6 +22,7 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     FONT_FAMILY,
+    apply_treeview_row_tags,
     style_treeview,
 )
 
@@ -240,19 +241,23 @@ class AduanasView(ctk.CTkFrame):
             return
 
         self._clear_table()
+        apply_treeview_row_tags(self.table)
 
-        for aduana in aduanas:
+        for idx, aduana in enumerate(aduanas):
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
             self.table.insert(
                 "",
                 tk.END,
                 iid=str(aduana.aduana_id),
                 values=(aduana.codigo, aduana.nombre),
+                tags=(tag,),
             )
 
         count = len(aduanas)
         self.status_label.configure(
             text=f"Total: {count} {'aduana' if count == 1 else 'aduanas'} encontradas"
         )
+
 
     def _clear_table(self) -> None:
         children = self.table.get_children()
