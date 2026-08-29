@@ -6,7 +6,13 @@ from dotenv import load_dotenv
 from sqlalchemy import URL
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+import sys
+
+if getattr(sys, "frozen", False):
+    PROJECT_ROOT = Path(sys.executable).resolve().parent
+else:
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 ENV_FILE = PROJECT_ROOT / ".env"
 
 load_dotenv(ENV_FILE)

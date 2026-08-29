@@ -1,0 +1,51 @@
+===============================================================================
+       SISTEMA DE VALIDACIÓN DE HONORARIOS - ORIGENDATA S.A.
+       Instrucciones de Instalación y Ejecución en Windows 10 / Windows 11
+===============================================================================
+
+Este paquete contiene la aplicación "Validación de honorarios" compilada como
+ejecutable independiente (.exe) y firmada digitalmente con certificado a 5 años
+emitido a nombre de ORIGENDATA S.A.
+
+-------------------------------------------------------------------------------
+PASOS PARA LA INSTALACIÓN EN UN NUEVO EQUIPO (Windows 10 / 11):
+-------------------------------------------------------------------------------
+
+1. DESCOMPRIMIR EL PAQUETE:
+   Copie y extraiga todos los archivos en el directorio deseado (por ejemplo,
+   en C:\Program Files\ValidacionHonorarios o en su Escritorio / Documentos).
+
+2. INSTALAR EL CERTIFICADO DE SEGURIDAD (Solo se hace 1 vez por equipo):
+   
+   OPCIÓN A (Recomendada - 1 Clic):
+   - Clic derecho sobre "Instalar_Certificado.bat" -> Seleccione "Ejecutar como administrador".
+   - Si Windows solicita confirmación de permisos (UAC), haga clic en "Sí".
+   - Verá el mensaje de [ÉXITO] al finalizar.
+   
+   OPCIÓN B (Manual por interfaz de Windows si lo prefiere):
+   - Doble clic sobre el archivo "ORIGENDATA_Certificado.cer".
+   - Clic en el botón "Instalar certificado...".
+   - Seleccione "Equipo local" (Local Machine) y haga clic en Siguiente.
+   - Seleccione la 2da opción: "Colocar todos los certificados en el siguiente almacén".
+   - Clic en "Examinar" y elija: "Entidades de certificación raíz de confianza".
+   - Clic en Siguiente y luego en "Finalizar".
+   
+   (Una vez instalado, Windows Defender y SmartScreen reconocen a ORIGENDATA como
+    editor de confianza y no bloquearán la aplicación).
+
+3. CONFIGURACIÓN (.env):
+   - Verifique que el archivo ".env" contenga las credenciales correctas de la
+     base de datos (Host, Puerto, Base de datos, Usuario y Contraseña).
+
+4. EJECUCIÓN:
+   - Ejecute directamente "ValidacionHonorarios.exe" para iniciar el sistema.
+   - Opcional: Puede crear un acceso directo en el Escritorio a "ValidacionHonorarios.exe".
+
+-------------------------------------------------------------------------------
+DATOS DEL CERTIFICADO:
+- Empresa: ORIGENDATA S.A.
+- Unidad: Desarrollo de Software
+- Validez: 5 Años (2026 - 2031)
+- Algoritmo: SHA-256 / RSA 2048 bits
+- Contraseña PFX de respaldo: Origendata2026
+===============================================================================
