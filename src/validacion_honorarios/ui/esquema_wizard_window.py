@@ -538,6 +538,8 @@ class GeneralStep(WizardStep):
             button_color=COLOR_PRIMARY,
             button_hover_color=COLOR_PRIMARY_HOVER,
             text_color=COLOR_TEXT_PRIMARY,
+            border_width=1,
+            border_color=COLOR_BORDER,
             height=38,
             corner_radius=6,
         )
@@ -556,6 +558,8 @@ class GeneralStep(WizardStep):
             state="readonly",
             fg_color=COLOR_BG_CARD,
             text_color=COLOR_TEXT_MUTED,
+            border_width=1,
+            border_color=COLOR_BORDER,
             height=38,
             corner_radius=6,
         )
@@ -580,6 +584,8 @@ class GeneralStep(WizardStep):
             textvariable=self.start_date_var,
             fg_color=COLOR_BG_CARD,
             text_color=COLOR_TEXT_PRIMARY,
+            border_width=1,
+            border_color=COLOR_BORDER,
             height=38,
             corner_radius=6,
         )
@@ -593,10 +599,13 @@ class GeneralStep(WizardStep):
             button_color=COLOR_PRIMARY,
             button_hover_color=COLOR_PRIMARY_HOVER,
             text_color=COLOR_TEXT_PRIMARY,
+            border_width=1,
+            border_color=COLOR_BORDER,
             height=38,
             corner_radius=6,
         )
         self.currency_combo.grid(row=5, column=1, sticky="ew", padx=(14, 0), pady=(4, 12))
+
 
         ctk.CTkLabel(
             form_inner,
@@ -1541,7 +1550,11 @@ class ScheduleStep(WizardStep):
             height=32,
             fg_color=COLOR_BG_CARD,
             button_color=COLOR_PRIMARY,
+            button_hover_color=COLOR_PRIMARY_HOVER,
             text_color=COLOR_TEXT_PRIMARY,
+            border_width=1,
+            border_color=COLOR_BORDER,
+            corner_radius=6,
         )
         self.hour_from_opt.pack(side="left", padx=(4, 4))
 
@@ -1555,9 +1568,14 @@ class ScheduleStep(WizardStep):
             height=32,
             fg_color=COLOR_BG_CARD,
             button_color=COLOR_PRIMARY,
+            button_hover_color=COLOR_PRIMARY_HOVER,
             text_color=COLOR_TEXT_PRIMARY,
+            border_width=1,
+            border_color=COLOR_BORDER,
+            corner_radius=6,
         )
         self.hour_to_opt.pack(side="left", padx=(4, 10))
+
 
         ctk.CTkButton(
             ctrl_inner,
