@@ -1,14 +1,27 @@
-import tkinter as tk
-from decimal import Decimal
-from tkinter import messagebox, ttk
+"""Edición moderna del monto de una tarifa zona-canal con CustomTkinter."""
 
-from validacion_honorarios.services import (
-    ApplicationError,
-    ZonaTarifaService,
+from __future__ import annotations
+
+from decimal import Decimal
+import tkinter as tk
+from tkinter import messagebox
+import customtkinter as ctk
+
+from validacion_honorarios.services import ApplicationError, ZonaTarifaService
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
 )
 
 
-class MontoTarifaDialog(tk.Toplevel):
+class MontoTarifaDialog(ctk.CTkToplevel):
     """Edición del monto de una tarifa zona-canal."""
 
     def __init__(
@@ -26,22 +39,13 @@ class MontoTarifaDialog(tk.Toplevel):
         super().__init__(parent)
 
         self.service = service
-        self.esquema_cotizacion_id = (
-            esquema_cotizacion_id
-        )
+        self.esquema_cotizacion_id = esquema_cotizacion_id
         self.zona_id = zona_id
-        self.canal_selectividad_id = (
-            canal_selectividad_id
-        )
-
+        self.canal_selectividad_id = canal_selectividad_id
         self.resultado_guardado = False
 
         self.monto_var = tk.StringVar(
-            value=(
-                self._format_decimal(monto_actual)
-                if monto_actual is not None
-                else ""
-            )
+            value=self._format_decimal(monto_actual) if monto_actual is not None else ""
         )
 
         self._configure_window()
@@ -54,27 +58,22 @@ class MontoTarifaDialog(tk.Toplevel):
         self.transient(parent)
         self.grab_set()
 
-        self.wait_visibility()
+        self.after(100, lambda: self._set_focus())
+
+    def _set_focus(self) -> None:
         self.monto_entry.focus_set()
-        self.monto_entry.selection_range(
-            0,
-            tk.END,
-        )
+        self.monto_entry.select_range(0, tk.END)
 
     @staticmethod
-    def _format_decimal(
-        value: Decimal,
-    ) -> str:
+    def _format_decimal(value: Decimal) -> str:
         return format(value, ".2f")
 
     def _configure_window(self) -> None:
-        self.title("Tarifa por zona y canal")
+        self.title("Tarifa por Zona y Canal")
+        self.geometry("480x360")
         self.resizable(False, False)
 
-        self.protocol(
-            "WM_DELETE_WINDOW",
-            self._cancel,
-        )
+        self.protocol("WM_DELETE_WINDOW", self._cancel)
 
     def _build_interface(
         self,
@@ -82,123 +81,110 @@ class MontoTarifaDialog(tk.Toplevel):
         canal_nombre: str,
         moneda_codigo: str,
     ) -> None:
-        container = ttk.Frame(
+        container = ctk.CTkFrame(
             self,
-            padding=20,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=12,
+            border_width=1,
+            border_color=COLOR_BORDER,
         )
-        container.grid(
-            row=0,
-            column=0,
-            sticky="nsew",
-        )
+        container.pack(fill=tk.BOTH, expand=True, padx=16, pady=16)
 
-        ttk.Label(
+        # Header
+        header_lbl = ctk.CTkLabel(
             container,
-            text=f"Zona: {zona_nombre}",
-        ).grid(
-            row=0,
-            column=0,
-            sticky=tk.W,
+            text="💰 Configurar Tarifa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=16, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
         )
+        header_lbl.pack(anchor="w", padx=20, pady=(16, 10))
 
-        ttk.Label(
+        # Información de Zona y Canal
+        info_frame = ctk.CTkFrame(container, fg_color=COLOR_BORDER, corner_radius=8)
+        info_frame.pack(fill=tk.X, padx=20, pady=(0, 14), ipady=6, ipadx=8)
+
+        lbl_zona = ctk.CTkLabel(
+            info_frame,
+            text=f"📍 Zona: {zona_nombre}",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        )
+        lbl_zona.pack(anchor="w", padx=10, pady=(2, 0))
+
+        lbl_canal = ctk.CTkLabel(
+            info_frame,
+            text=f"🎯 Canal: {canal_nombre}",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
+        )
+        lbl_canal.pack(anchor="w", padx=10, pady=(0, 2))
+
+        # Campo Monto
+        lbl_monto = ctk.CTkLabel(
             container,
-            text=f"Canal: {canal_nombre}",
-        ).grid(
-            row=1,
-            column=0,
-            sticky=tk.W,
-            pady=(4, 18),
+            text=f"Monto en {moneda_codigo}:",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_MUTED,
         )
+        lbl_monto.pack(anchor="w", padx=20, pady=(0, 2))
 
-        ttk.Label(
-            container,
-            text=f"Monto ({moneda_codigo})",
-        ).grid(
-            row=2,
-            column=0,
-            sticky=tk.W,
-            pady=(0, 4),
-        )
-
-        self.monto_entry = ttk.Entry(
+        self.monto_entry = ctk.CTkEntry(
             container,
             textvariable=self.monto_var,
-            width=28,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+            height=36,
+            corner_radius=8,
+            placeholder_text="Ej: 38000.50",
         )
-        self.monto_entry.grid(
-            row=3,
-            column=0,
-            sticky=tk.EW,
-            pady=(0, 8),
-        )
+        self.monto_entry.pack(fill=tk.X, padx=20, pady=(0, 4))
 
-        ttk.Label(
+        lbl_hint = ctk.CTkLabel(
             container,
-            text=(
-                "Formatos admitidos: 38000, "
-                "38000,50 o 38.000,50."
-            ),
-            foreground="#555555",
-        ).grid(
-            row=4,
-            column=0,
-            sticky=tk.W,
-            pady=(0, 20),
+            text="* Formatos admitidos: 38000, 38000,50 o 38.000,50",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
         )
+        lbl_hint.pack(anchor="w", padx=20, pady=(0, 16))
 
-        button_frame = ttk.Frame(container)
-        button_frame.grid(
-            row=5,
-            column=0,
-            sticky=tk.E,
-        )
+        # Botones
+        btn_frame = ctk.CTkFrame(container, fg_color="transparent")
+        btn_frame.pack(fill=tk.X, padx=20, pady=(0, 16), side="bottom")
 
-        ttk.Button(
-            button_frame,
-            text="Cancelar",
-            command=self._cancel,
-        ).pack(
-            side=tk.LEFT,
-            padx=(0, 8),
-        )
-
-        ttk.Button(
-            button_frame,
-            text="Guardar tarifa",
+        btn_guardar = ctk.CTkButton(
+            btn_frame,
+            text="Guardar Tarifa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=8,
+            height=36,
             command=self._save,
-        ).pack(
-            side=tk.LEFT,
         )
+        btn_guardar.pack(side="right", padx=(8, 0))
 
-        container.columnconfigure(
-            0,
-            weight=1,
+        btn_cancelar = ctk.CTkButton(
+            btn_frame,
+            text="Cancelar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=8,
+            height=36,
+            command=self._cancel,
         )
+        btn_cancelar.pack(side="right")
 
-        self.bind(
-            "<Return>",
-            lambda _event: self._save(),
-        )
-
-        self.bind(
-            "<Escape>",
-            lambda _event: self._cancel(),
-        )
+        self.bind("<Return>", lambda _e: self._save())
+        self.bind("<Escape>", lambda _e: self._cancel())
 
     def _save(self) -> None:
         try:
             self.service.establecer_tarifa(
-                esquema_cotizacion_id=(
-                    self.esquema_cotizacion_id
-                ),
+                esquema_cotizacion_id=self.esquema_cotizacion_id,
                 zona_id=self.zona_id,
-                canal_selectividad_id=(
-                    self.canal_selectividad_id
-                ),
+                canal_selectividad_id=self.canal_selectividad_id,
                 monto=self.monto_var.get(),
             )
-
         except ApplicationError as exc:
             messagebox.showwarning(
                 title="No se pudo guardar",
@@ -206,13 +192,11 @@ class MontoTarifaDialog(tk.Toplevel):
                 parent=self,
             )
             return
-
         except Exception as exc:
             messagebox.showerror(
                 title="Error inesperado",
                 message=(
-                    "Se produjo un error al guardar "
-                    "la tarifa.\n\n"
+                    "Se produjo un error al guardar la tarifa.\n\n"
                     f"Detalle técnico:\n{exc}"
                 ),
                 parent=self,
