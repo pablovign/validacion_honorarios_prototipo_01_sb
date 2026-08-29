@@ -20,8 +20,10 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_PRIMARY,
     FONT_FAMILY,
     apply_global_ttk_theme,
+    apply_treeview_row_tags,
     style_treeview,
 )
+
 
 
 class ResumenEsquemaWindow(ctk.CTkToplevel):
@@ -204,22 +206,33 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
         self._clear_frame(self.general_tab)
         general = self.resumen["general"]
 
-        data_frame = ttk.LabelFrame(
+        card = ctk.CTkFrame(
             self.general_tab,
-            text="Identificación",
-            padding=14,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
         )
-        data_frame.pack(fill=tk.X, pady=(0, 14))
-        data_frame.columnconfigure(1, weight=1)
-        data_frame.columnconfigure(3, weight=1)
+        card.pack(fill=tk.X, pady=(0, 14))
+
+        card_inner = ctk.CTkFrame(card, fg_color="transparent")
+        card_inner.pack(fill=tk.BOTH, expand=True, padx=20, pady=16)
+        card_inner.columnconfigure(1, weight=1)
+        card_inner.columnconfigure(3, weight=1)
+
+        ctk.CTkLabel(
+            card_inner,
+            text="Datos de Identificación del Esquema",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=15, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, columnspan=4, sticky="w", pady=(0, 12))
 
         values = (
             ("Proveedor", general["proveedor"]),
             ("CUIT", general["cuit"]),
             (
                 "Aduana",
-                f"{general['aduana_codigo']} - "
-                f"{general['aduana_nombre']}",
+                f"{general['aduana_codigo']} - {general['aduana_nombre']}",
             ),
             (
                 "Fecha de inicio",
@@ -237,47 +250,67 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
         )
 
         for index, (label, value) in enumerate(values):
-            row = index // 2
+            row = (index // 2) + 1
             pair_column = (index % 2) * 2
 
-            ttk.Label(
-                data_frame,
+            ctk.CTkLabel(
+                card_inner,
                 text=f"{label}:",
+                font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+                text_color=COLOR_TEXT_PRIMARY,
             ).grid(
                 row=row,
                 column=pair_column,
                 sticky="nw",
                 padx=(0, 8),
-                pady=5,
+                pady=6,
             )
-            ttk.Label(
-                data_frame,
+            ctk.CTkLabel(
+                card_inner,
                 text=str(value),
+                font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+                text_color=COLOR_TEXT_MUTED,
                 wraplength=430,
             ).grid(
                 row=row,
                 column=pair_column + 1,
                 sticky="nw",
                 padx=(0, 24),
-                pady=5,
+                pady=6,
             )
 
-        notes_frame = ttk.LabelFrame(
+        notes_card = ctk.CTkFrame(
             self.general_tab,
-            text="Observaciones",
-            padding=14,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
         )
-        notes_frame.pack(fill=tk.BOTH, expand=True)
+        notes_card.pack(fill=tk.BOTH, expand=True)
+
+        notes_inner = ctk.CTkFrame(notes_card, fg_color="transparent")
+        notes_inner.pack(fill=tk.BOTH, expand=True, padx=20, pady=16)
+
+        ctk.CTkLabel(
+            notes_inner,
+            text="Observaciones",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=14, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(anchor="w", pady=(0, 8))
 
         observations = general["observaciones"] or "Sin observaciones."
-        text = tk.Text(
-            notes_frame,
-            wrap=tk.WORD,
-            height=12,
+        notes_box = ctk.CTkTextbox(
+            notes_inner,
+            fg_color=COLOR_BG_CARD,
+            text_color=COLOR_TEXT_PRIMARY,
+            corner_radius=6,
+            border_width=1,
+            border_color=COLOR_BORDER,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
         )
-        text.pack(fill=tk.BOTH, expand=True)
-        text.insert("1.0", observations)
-        text.configure(state=tk.DISABLED)
+        notes_box.pack(fill=tk.BOTH, expand=True)
+        notes_box.insert("1.0", observations)
+        notes_box.configure(state="disabled")
 
     def _build_main_tariffs_tab(self) -> None:
         self._clear_frame(self.main_tariffs_tab)
@@ -286,10 +319,12 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
         rows = self.resumen["tarifas_principales"]
 
         if not rows:
-            ttk.Label(
+            ctk.CTkLabel(
                 self.main_tariffs_tab,
-                text="El esquema no tiene zonas cargadas.",
-            ).pack(anchor=tk.W)
+                text="ℹ️ El esquema no tiene zonas cargadas.",
+                font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+                text_color=COLOR_TEXT_MUTED,
+            ).pack(anchor=tk.W, padx=10, pady=10)
             return
 
         columns = [
@@ -300,7 +335,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             ],
         ]
 
-        table_frame = ttk.Frame(self.main_tariffs_tab)
+        table_frame = ctk.CTkFrame(self.main_tariffs_tab, fg_color="transparent")
         table_frame.pack(fill=tk.BOTH, expand=True)
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
@@ -309,6 +344,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             table_frame,
             columns=columns,
             show="headings",
+            style="Custom.Treeview",
         )
         table.grid(row=0, column=0, sticky="nsew")
 
@@ -339,9 +375,10 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             table.heading(column, text=channel["nombre"])
             table.column(column, width=150, anchor=tk.E)
 
-        for row in rows:
-            values = [row["zona"]]
+        apply_treeview_row_tags(table)
 
+        for idx, row in enumerate(rows):
+            values = [row["zona"]]
             for channel in channels:
                 amount = row["tarifas"].get(
                     channel["canal_selectividad_id"]
@@ -351,8 +388,8 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
                     if amount is not None
                     else "Sin cargar"
                 )
-
-            table.insert("", tk.END, values=values)
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            table.insert("", tk.END, values=values, tags=(tag,))
 
     def _build_trucks_tab(self) -> None:
         self._clear_frame(self.trucks_tab)
@@ -361,13 +398,12 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
         ranges = self.resumen["tramos_camiones"]
 
         if not ranges:
-            ttk.Label(
+            ctk.CTkLabel(
                 self.trucks_tab,
-                text=(
-                    "No hay tramos adicionales por camiones "
-                    "configurados."
-                ),
-            ).pack(anchor=tk.W)
+                text="ℹ️ No hay tramos adicionales por camiones configurados.",
+                font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+                text_color=COLOR_TEXT_MUTED,
+            ).pack(anchor=tk.W, padx=10, pady=10)
             return
 
         columns = [
@@ -375,7 +411,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             *[f"zona_{zone['zona_id']}" for zone in zones],
         ]
 
-        table_frame = ttk.Frame(self.trucks_tab)
+        table_frame = ctk.CTkFrame(self.trucks_tab, fg_color="transparent")
         table_frame.pack(fill=tk.BOTH, expand=True)
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
@@ -384,6 +420,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             table_frame,
             columns=columns,
             show="headings",
+            style="Custom.Treeview",
         )
         table.grid(row=0, column=0, sticky="nsew")
 
@@ -414,9 +451,10 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             table.heading(column, text=zone["nombre"])
             table.column(column, width=160, anchor=tk.E)
 
-        for item in ranges:
-            values = [item["descripcion"]]
+        apply_treeview_row_tags(table)
 
+        for idx, item in enumerate(ranges):
+            values = [item["descripcion"]]
             for zone in zones:
                 amount = item["tarifas"].get(zone["zona_id"])
                 values.append(
@@ -424,40 +462,42 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
                     if amount is not None
                     else "Sin cargar"
                 )
-
-            table.insert("", tk.END, values=values)
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            table.insert("", tk.END, values=values, tags=(tag,))
 
     def _build_schedule_tab(self) -> None:
         self._clear_frame(self.schedule_tab)
         schedule = self.resumen["horario"]
 
-        summary = ttk.LabelFrame(
+        summary_card = ctk.CTkFrame(
             self.schedule_tab,
-            text="Resumen horario",
-            padding=12,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=8,
+            border_width=1,
+            border_color=COLOR_BORDER,
         )
-        summary.pack(fill=tk.X, pady=(0, 12))
+        summary_card.pack(fill=tk.X, pady=(0, 12))
 
-        ttk.Label(
-            summary,
+        ctk.CTkLabel(
+            summary_card,
             text=(
-                f"Posiciones: {schedule['cantidad_registros']} | "
-                f"Con importe mayor que cero: "
-                f"{schedule['cantidad_mayor_cero']} | "
-                f"En cero: {schedule['cantidad_en_cero']}"
+                f"📊 Posiciones: {schedule['cantidad_registros']} | "
+                f"Con recargo (> 0): {schedule['cantidad_mayor_cero']} | "
+                f"Tarifa base (en cero): {schedule['cantidad_en_cero']}"
             ),
-        ).pack(anchor=tk.W)
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_PRIMARY,
+        ).pack(anchor="w", padx=16, pady=10)
 
         blocks = schedule["bloques"]
 
         if not blocks:
-            ttk.Label(
+            ctk.CTkLabel(
                 self.schedule_tab,
-                text=(
-                    "No hay bloques horarios con importe "
-                    "mayor que cero."
-                ),
-            ).pack(anchor=tk.W)
+                text="ℹ️ No hay bloques horarios con importe mayor que cero.",
+                font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+                text_color=COLOR_TEXT_MUTED,
+            ).pack(anchor=tk.W, padx=10, pady=10)
             return
 
         columns = (
@@ -467,7 +507,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             "monto",
         )
 
-        table_frame = ttk.Frame(self.schedule_tab)
+        table_frame = ctk.CTkFrame(self.schedule_tab, fg_color="transparent")
         table_frame.pack(fill=tk.BOTH, expand=True)
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
@@ -476,6 +516,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             table_frame,
             columns=columns,
             show="headings",
+            style="Custom.Treeview",
         )
         table.grid(row=0, column=0, sticky="nsew")
 
@@ -502,7 +543,10 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
         table.column("hasta", width=120, anchor=tk.CENTER)
         table.column("monto", width=180, anchor=tk.E)
 
-        for block in blocks:
+        apply_treeview_row_tags(table)
+
+        for idx, block in enumerate(blocks):
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
             table.insert(
                 "",
                 tk.END,
@@ -512,6 +556,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
                     self._format_end_hour(block["hora_hasta"]),
                     self._format_amount(block["monto"]),
                 ),
+                tags=(tag,),
             )
 
     def _build_validation_tab(self) -> None:
@@ -522,7 +567,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             "mensaje",
         )
 
-        table_frame = ttk.Frame(self.validation_tab)
+        table_frame = ctk.CTkFrame(self.validation_tab, fg_color="transparent")
         table_frame.pack(fill=tk.BOTH, expand=True)
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
@@ -531,6 +576,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             table_frame,
             columns=columns,
             show="headings",
+            style="Custom.Treeview",
         )
         table.grid(row=0, column=0, sticky="nsew")
 
@@ -543,11 +589,14 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
         table.configure(yscrollcommand=scrollbar.set)
 
         table.heading("nivel", text="Nivel")
-        table.heading("mensaje", text="Detalle")
+        table.heading("mensaje", text="Detalle de Comprobación")
         table.column("nivel", width=130, anchor=tk.CENTER)
         table.column("mensaje", width=900, anchor=tk.W)
 
-        for warning in self.resumen["advertencias"]:
+        apply_treeview_row_tags(table)
+
+        for idx, warning in enumerate(self.resumen["advertencias"]):
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
             table.insert(
                 "",
                 tk.END,
@@ -555,6 +604,7 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
                     warning["nivel"],
                     warning["mensaje"],
                 ),
+                tags=(tag,),
             )
 
     @staticmethod
@@ -572,3 +622,4 @@ class ResumenEsquemaWindow(ctk.CTkToplevel):
             return "24:00"
 
         return f"{hour:02d}:00"
+

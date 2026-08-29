@@ -167,12 +167,13 @@ class EsquemaWizardWindow(ctk.CTkToplevel):
             self.step_buttons.append(button)
 
         # Contenedor de Pasos
-        self.content = ttk.Frame(self, padding=(20, 0, 20, 8))
-        self.content.grid(row=2, column=0, sticky="nsew")
+        self.content = ctk.CTkFrame(self, fg_color="transparent")
+        self.content.grid(row=2, column=0, sticky="nsew", padx=24, pady=(0, 14))
         self.content.columnconfigure(0, weight=1)
         self.content.rowconfigure(0, weight=1)
 
         # Footer
+
         footer_card = ctk.CTkFrame(
             self,
             fg_color=COLOR_BG_SURFACE,
@@ -462,9 +463,9 @@ class EsquemaWizardWindow(ctk.CTkToplevel):
         self.destroy()
 
 
-class WizardStep(ttk.Frame):
+class WizardStep(ctk.CTkFrame):
     def __init__(self, parent: tk.Misc, wizard: EsquemaWizardWindow) -> None:
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self.wizard = wizard
 
     def refresh(self) -> None:
@@ -493,59 +494,126 @@ class GeneralStep(WizardStep):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        ttk.Label(
+        ctk.CTkLabel(
             self,
             text="1. Datos generales",
-            style="SectionTitle.TLabel",
-        ).grid(row=0, column=0, sticky="w", pady=(0, 8))
+            font=ctk.CTkFont(family=FONT_FAMILY, size=18, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 4))
 
-        ttk.Label(
+        ctk.CTkLabel(
             self,
-            text=(
-                "Guarda la cabecera para crear el esquema en BORRADOR y "
-                "la zona inicial GENERAL."
-            ),
+            text="Guarda la cabecera para crear el esquema en BORRADOR y la zona inicial GENERAL.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
         ).grid(row=1, column=0, sticky="w", pady=(0, 14))
 
-        form = ttk.LabelFrame(self, text="Cabecera", padding=18)
+        form = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
         form.grid(row=2, column=0, sticky="nsew")
-        form.columnconfigure(0, weight=1)
-        form.columnconfigure(1, weight=1)
-        form.rowconfigure(7, weight=1)
 
-        ttk.Label(form, text="Proveedor").grid(row=0, column=0, columnspan=2, sticky="w")
-        self.provider_combo = ttk.Combobox(
-            form,
-            textvariable=self.provider_var,
-            state="readonly",
+        form_inner = ctk.CTkFrame(form, fg_color="transparent")
+        form_inner.pack(fill=tk.BOTH, expand=True, padx=24, pady=20)
+        form_inner.columnconfigure(0, weight=1)
+        form_inner.columnconfigure(1, weight=1)
+        form_inner.rowconfigure(7, weight=1)
+
+        ctk.CTkLabel(
+            form_inner,
+            text="Proveedor *",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, columnspan=2, sticky="w")
+
+        self.provider_combo = ctk.CTkOptionMenu(
+            form_inner,
+            variable=self.provider_var,
+            command=self._provider_changed,
+            fg_color=COLOR_BG_CARD,
+            button_color=COLOR_PRIMARY,
+            button_hover_color=COLOR_PRIMARY_HOVER,
+            text_color=COLOR_TEXT_PRIMARY,
+            height=38,
+            corner_radius=6,
         )
         self.provider_combo.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(4, 12))
-        self.provider_combo.bind("<<ComboboxSelected>>", self._provider_changed)
 
-        ttk.Label(form, text="Aduana asociada").grid(row=2, column=0, columnspan=2, sticky="w")
-        ttk.Entry(
-            form,
+        ctk.CTkLabel(
+            form_inner,
+            text="Aduana asociada (automática según proveedor)",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=2, column=0, columnspan=2, sticky="w")
+
+        self.customs_entry = ctk.CTkEntry(
+            form_inner,
             textvariable=self.customs_var,
             state="readonly",
-        ).grid(row=3, column=0, columnspan=2, sticky="ew", pady=(4, 12))
+            fg_color=COLOR_BG_CARD,
+            text_color=COLOR_TEXT_MUTED,
+            height=38,
+            corner_radius=6,
+        )
+        self.customs_entry.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(4, 12))
 
-        ttk.Label(form, text="Fecha de inicio").grid(row=4, column=0, sticky="w")
-        ttk.Label(form, text="Moneda").grid(row=4, column=1, sticky="w", padx=(12, 0))
+        ctk.CTkLabel(
+            form_inner,
+            text="Fecha de inicio (DD/MM/AAAA) *",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=4, column=0, sticky="w")
 
-        ttk.Entry(
-            form,
+        ctk.CTkLabel(
+            form_inner,
+            text="Moneda *",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=4, column=1, sticky="w", padx=(14, 0))
+
+        self.start_date_entry = ctk.CTkEntry(
+            form_inner,
             textvariable=self.start_date_var,
-        ).grid(row=5, column=0, sticky="ew", pady=(4, 12))
+            fg_color=COLOR_BG_CARD,
+            text_color=COLOR_TEXT_PRIMARY,
+            height=38,
+            corner_radius=6,
+        )
+        self.start_date_entry.grid(row=5, column=0, sticky="ew", pady=(4, 12))
 
-        ttk.Combobox(
-            form,
-            textvariable=self.currency_var,
-            state="readonly",
-            values=("ARS", "USD"),
-        ).grid(row=5, column=1, sticky="ew", padx=(12, 0), pady=(4, 12))
+        self.currency_combo = ctk.CTkOptionMenu(
+            form_inner,
+            variable=self.currency_var,
+            values=["ARS", "USD"],
+            fg_color=COLOR_BG_CARD,
+            button_color=COLOR_PRIMARY,
+            button_hover_color=COLOR_PRIMARY_HOVER,
+            text_color=COLOR_TEXT_PRIMARY,
+            height=38,
+            corner_radius=6,
+        )
+        self.currency_combo.grid(row=5, column=1, sticky="ew", padx=(14, 0), pady=(4, 12))
 
-        ttk.Label(form, text="Observaciones").grid(row=6, column=0, columnspan=2, sticky="w")
-        self.notes_text = tk.Text(form, height=9, wrap=tk.WORD)
+        ctk.CTkLabel(
+            form_inner,
+            text="Observaciones",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=6, column=0, columnspan=2, sticky="w")
+
+        self.notes_text = ctk.CTkTextbox(
+            form_inner,
+            fg_color=COLOR_BG_CARD,
+            text_color=COLOR_TEXT_PRIMARY,
+            corner_radius=6,
+            border_width=1,
+            border_color=COLOR_BORDER,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+        )
         self.notes_text.grid(row=7, column=0, columnspan=2, sticky="nsew", pady=(4, 0))
 
     def refresh(self) -> None:
@@ -567,7 +635,7 @@ class GeneralStep(WizardStep):
             values.append(label)
             self.providers_by_label[label] = provider
 
-        self.provider_combo.configure(values=values)
+        self.provider_combo.configure(values=values if values else ["Sin proveedores"])
 
         scheme = self.wizard.esquema
         if scheme is None:
@@ -591,8 +659,11 @@ class GeneralStep(WizardStep):
         if scheme.observaciones:
             self.notes_text.insert("1.0", scheme.observaciones)
 
-        state = tk.NORMAL if self.wizard.editable else tk.DISABLED
-        self.provider_combo.configure(state="readonly" if state == tk.NORMAL else tk.DISABLED)
+        state = "normal" if self.wizard.editable else "disabled"
+        self.provider_combo.configure(state=state)
+        self.start_date_entry.configure(state=state)
+        self.currency_combo.configure(state=state)
+        self.notes_text.configure(state=state)
 
     def _provider_changed(self, _event=None) -> None:
         provider = self.providers_by_label.get(self.provider_var.get())
@@ -613,7 +684,7 @@ class GeneralStep(WizardStep):
             )
             return False
 
-        notes = self.notes_text.get("1.0", tk.END)
+        notes = self.notes_text.get("1.0", tk.END).strip()
 
         try:
             if self.wizard.esquema_cotizacion_id is None:
@@ -645,6 +716,7 @@ class GeneralStep(WizardStep):
         return True
 
 
+
 class ZonesTariffsStep(WizardStep):
     def __init__(self, parent: tk.Misc, wizard: EsquemaWizardWindow) -> None:
         super().__init__(parent, wizard)
@@ -660,47 +732,132 @@ class ZonesTariffsStep(WizardStep):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        ttk.Label(
+        ctk.CTkLabel(
             self,
             text="2. Zonas y tarifas principales",
-            style="SectionTitle.TLabel",
-        ).grid(row=0, column=0, sticky="w", pady=(0, 8))
+            font=ctk.CTkFont(family=FONT_FAMILY, size=18, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 4))
 
-        ttk.Label(
+        ctk.CTkLabel(
             self,
-            text=(
-                "Mantén GENERAL si no hay división por zonas. "
-                "La matriz permite un importe distinto por zona y canal."
-            ),
-        ).grid(row=1, column=0, sticky="w", pady=(0, 12))
+            text="Mantén GENERAL si no hay división por zonas. La matriz permite un importe distinto por zona y canal.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
+        ).grid(row=1, column=0, sticky="w", pady=(0, 14))
 
-        body = ttk.Panedwindow(self, orient=tk.HORIZONTAL)
+        body = ctk.CTkFrame(self, fg_color="transparent")
         body.grid(row=2, column=0, sticky="nsew")
+        body.columnconfigure(0, weight=1)
+        body.columnconfigure(1, weight=4)
+        body.rowconfigure(0, weight=1)
 
-        left = ttk.Frame(body, padding=10)
-        right = ttk.Frame(body, padding=10)
-        body.add(left, weight=1)
-        body.add(right, weight=4)
+        # Panel Izquierdo: Zonas
+        left_card = ctk.CTkFrame(
+            body,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        left_card.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
-        ttk.Label(left, text="Zonas", style="SectionTitle.TLabel").pack(anchor=tk.W, pady=(0, 8))
-        self.zone_list = tk.Listbox(left, exportselection=False)
+        left_inner = ctk.CTkFrame(left_card, fg_color="transparent")
+        left_inner.pack(fill=tk.BOTH, expand=True, padx=14, pady=14)
+
+        ctk.CTkLabel(
+            left_inner,
+            text="Zonas registradas",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=14, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(anchor="w", pady=(0, 8))
+
+        mode = ctk.get_appearance_mode()
+        is_dark = mode == "Dark"
+
+        self.zone_list = tk.Listbox(
+            left_inner,
+            exportselection=False,
+            bg="#1E293B" if is_dark else "#FFFFFF",
+            fg="#F8FAFC" if is_dark else "#0F172A",
+            selectbackground="#4F46E5",
+            selectforeground="#FFFFFF",
+            relief="flat",
+            highlightthickness=1,
+            highlightcolor="#4F46E5",
+            highlightbackground="#334155" if is_dark else "#CBD5E1",
+            font=(FONT_FAMILY, 10),
+        )
         self.zone_list.pack(fill=tk.BOTH, expand=True)
         self.zone_list.bind("<Double-1>", lambda _event: self.edit_zone())
 
-        zone_actions = ttk.Frame(left)
-        zone_actions.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(zone_actions, text="Nueva", command=self.new_zone).pack(fill=tk.X, pady=(0, 5))
-        ttk.Button(zone_actions, text="Editar", command=self.edit_zone).pack(fill=tk.X, pady=(0, 5))
-        ttk.Button(zone_actions, text="Eliminar", command=self.delete_zone).pack(fill=tk.X)
+        zone_actions = ctk.CTkFrame(left_inner, fg_color="transparent")
+        zone_actions.pack(fill=tk.X, pady=(10, 0))
 
-        ttk.Label(right, text="Matriz Zona × Canal", style="SectionTitle.TLabel").pack(anchor=tk.W, pady=(0, 8))
+        ctk.CTkButton(
+            zone_actions,
+            text="+ Nueva zona",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.new_zone,
+        ).pack(fill=tk.X, pady=(0, 6))
 
-        table_frame = ttk.Frame(right)
+        ctk.CTkButton(
+            zone_actions,
+            text="Editar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.edit_zone,
+        ).pack(fill=tk.X, pady=(0, 6))
+
+        ctk.CTkButton(
+            zone_actions,
+            text="Eliminar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_DANGER,
+            hover_color=COLOR_DANGER_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.delete_zone,
+        ).pack(fill=tk.X)
+
+        # Panel Derecho: Matriz
+        right_card = ctk.CTkFrame(
+            body,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        right_card.grid(row=0, column=1, sticky="nsew")
+
+        right_inner = ctk.CTkFrame(right_card, fg_color="transparent")
+        right_inner.pack(fill=tk.BOTH, expand=True, padx=16, pady=14)
+
+        ctk.CTkLabel(
+            right_inner,
+            text="Matriz: Zona × Canal de Selectividad",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=14, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(anchor="w", pady=(0, 8))
+
+        table_frame = ctk.CTkFrame(right_inner, fg_color="transparent")
         table_frame.pack(fill=tk.BOTH, expand=True)
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
 
-        self.table = ttk.Treeview(table_frame, show="headings", selectmode="browse")
+        self.table = ttk.Treeview(
+            table_frame,
+            show="headings",
+            selectmode="browse",
+            style="Custom.Treeview",
+        )
         self.table.grid(row=0, column=0, sticky="nsew")
         self.table.bind("<Button-1>", self._table_click)
         self.table.bind("<Double-1>", self._table_double_click)
@@ -711,12 +868,37 @@ class ZonesTariffsStep(WizardStep):
         xbar.grid(row=1, column=0, sticky="ew")
         self.table.configure(yscrollcommand=ybar.set, xscrollcommand=xbar.set)
 
-        ttk.Label(right, textvariable=self.selection_var).pack(fill=tk.X, pady=(8, 0))
+        info_bar = ctk.CTkFrame(right_inner, fg_color="transparent")
+        info_bar.pack(fill=tk.X, pady=(10, 0))
 
-        actions = ttk.Frame(right)
-        actions.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(actions, text="Editar tarifa", command=self.edit_tariff).pack(side=tk.LEFT)
-        ttk.Button(actions, text="Quitar tarifa", command=self.remove_tariff).pack(side=tk.LEFT, padx=(8, 0))
+        ctk.CTkLabel(
+            info_bar,
+            textvariable=self.selection_var,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
+        ).pack(side="left")
+
+        ctk.CTkButton(
+            info_bar,
+            text="Quitar tarifa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.remove_tariff,
+        ).pack(side="right")
+
+        ctk.CTkButton(
+            info_bar,
+            text="✏️ Editar tarifa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.edit_tariff,
+        ).pack(side="right", padx=(0, 8))
 
     def refresh(self) -> None:
         if self.wizard.esquema_cotizacion_id is None:
@@ -762,7 +944,6 @@ class ZonesTariffsStep(WizardStep):
                 values.append(self.format_amount(tariff.monto) if tariff else "")
             tag = "evenrow" if idx % 2 == 0 else "oddrow"
             self.table.insert("", tk.END, iid=str(zone.zona_id), values=values, tags=(tag,))
-
 
     def new_zone(self) -> None:
         if not self.wizard.editable:
@@ -922,43 +1103,173 @@ class TrucksStep(WizardStep):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        ttk.Label(self, text="3. Adicionales por camiones", style="SectionTitle.TLabel").grid(row=0, column=0, sticky="w", pady=(0, 8))
-        ttk.Label(self, text="Componente opcional. Si no corresponde, pulsa Siguiente.").grid(row=1, column=0, sticky="w", pady=(0, 12))
+        ctk.CTkLabel(
+            self,
+            text="3. Adicionales por camiones",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=18, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 4))
 
-        body = ttk.Panedwindow(self, orient=tk.HORIZONTAL)
+        ctk.CTkLabel(
+            self,
+            text="Componente opcional. Si no corresponde, pulsa Siguiente.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
+        ).grid(row=1, column=0, sticky="w", pady=(0, 14))
+
+        body = ctk.CTkFrame(self, fg_color="transparent")
         body.grid(row=2, column=0, sticky="nsew")
-        left = ttk.Frame(body, padding=10)
-        right = ttk.Frame(body, padding=10)
-        body.add(left, weight=1)
-        body.add(right, weight=4)
+        body.columnconfigure(0, weight=1)
+        body.columnconfigure(1, weight=4)
+        body.rowconfigure(0, weight=1)
 
-        ttk.Label(left, text="Tramos", style="SectionTitle.TLabel").pack(anchor=tk.W, pady=(0, 8))
-        self.tramos_list = tk.Listbox(left, exportselection=False)
+        # Panel Izquierdo: Tramos
+        left_card = ctk.CTkFrame(
+            body,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        left_card.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        left_inner = ctk.CTkFrame(left_card, fg_color="transparent")
+        left_inner.pack(fill=tk.BOTH, expand=True, padx=14, pady=14)
+
+        ctk.CTkLabel(
+            left_inner,
+            text="Tramos de camiones",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=14, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(anchor="w", pady=(0, 8))
+
+        mode = ctk.get_appearance_mode()
+        is_dark = mode == "Dark"
+
+        self.tramos_list = tk.Listbox(
+            left_inner,
+            exportselection=False,
+            bg="#1E293B" if is_dark else "#FFFFFF",
+            fg="#F8FAFC" if is_dark else "#0F172A",
+            selectbackground="#4F46E5",
+            selectforeground="#FFFFFF",
+            relief="flat",
+            highlightthickness=1,
+            highlightcolor="#4F46E5",
+            highlightbackground="#334155" if is_dark else "#CBD5E1",
+            font=(FONT_FAMILY, 10),
+        )
         self.tramos_list.pack(fill=tk.BOTH, expand=True)
         self.tramos_list.bind("<Double-1>", lambda _event: self.edit_tramo())
-        ttk.Button(left, text="Nuevo tramo", command=self.new_tramo).pack(fill=tk.X, pady=(8, 5))
-        ttk.Button(left, text="Editar tramo", command=self.edit_tramo).pack(fill=tk.X, pady=(0, 5))
-        ttk.Button(left, text="Eliminar tramo", command=self.delete_tramo).pack(fill=tk.X)
 
-        ttk.Label(right, text="Matriz Tramo × Zona", style="SectionTitle.TLabel").pack(anchor=tk.W, pady=(0, 8))
-        table_frame = ttk.Frame(right)
+        tramo_actions = ctk.CTkFrame(left_inner, fg_color="transparent")
+        tramo_actions.pack(fill=tk.X, pady=(10, 0))
+
+        ctk.CTkButton(
+            tramo_actions,
+            text="+ Nuevo tramo",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.new_tramo,
+        ).pack(fill=tk.X, pady=(0, 6))
+
+        ctk.CTkButton(
+            tramo_actions,
+            text="Editar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.edit_tramo,
+        ).pack(fill=tk.X, pady=(0, 6))
+
+        ctk.CTkButton(
+            tramo_actions,
+            text="Eliminar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_DANGER,
+            hover_color=COLOR_DANGER_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.delete_tramo,
+        ).pack(fill=tk.X)
+
+        # Panel Derecho: Matriz
+        right_card = ctk.CTkFrame(
+            body,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        right_card.grid(row=0, column=1, sticky="nsew")
+
+        right_inner = ctk.CTkFrame(right_card, fg_color="transparent")
+        right_inner.pack(fill=tk.BOTH, expand=True, padx=16, pady=14)
+
+        ctk.CTkLabel(
+            right_inner,
+            text="Matriz: Tramo × Zona",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=14, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(anchor="w", pady=(0, 8))
+
+        table_frame = ctk.CTkFrame(right_inner, fg_color="transparent")
         table_frame.pack(fill=tk.BOTH, expand=True)
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
-        self.table = ttk.Treeview(table_frame, show="headings", selectmode="browse")
+
+        self.table = ttk.Treeview(
+            table_frame,
+            show="headings",
+            selectmode="browse",
+            style="Custom.Treeview",
+        )
         self.table.grid(row=0, column=0, sticky="nsew")
         self.table.bind("<Button-1>", self._table_click)
         self.table.bind("<Double-1>", self._table_double_click)
+
         ybar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.table.yview)
         ybar.grid(row=0, column=1, sticky="ns")
         xbar = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL, command=self.table.xview)
         xbar.grid(row=1, column=0, sticky="ew")
         self.table.configure(yscrollcommand=ybar.set, xscrollcommand=xbar.set)
-        ttk.Label(right, textvariable=self.selection_var).pack(fill=tk.X, pady=(8, 0))
-        actions = ttk.Frame(right)
-        actions.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(actions, text="Editar tarifa", command=self.edit_tariff).pack(side=tk.LEFT)
-        ttk.Button(actions, text="Quitar tarifa", command=self.remove_tariff).pack(side=tk.LEFT, padx=(8, 0))
+
+        info_bar = ctk.CTkFrame(right_inner, fg_color="transparent")
+        info_bar.pack(fill=tk.X, pady=(10, 0))
+
+        ctk.CTkLabel(
+            info_bar,
+            textvariable=self.selection_var,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
+        ).pack(side="left")
+
+        ctk.CTkButton(
+            info_bar,
+            text="Quitar tarifa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.remove_tariff,
+        ).pack(side="right")
+
+        ctk.CTkButton(
+            info_bar,
+            text="✏️ Editar tarifa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.edit_tariff,
+        ).pack(side="right", padx=(0, 8))
 
     def refresh(self) -> None:
         if self.wizard.esquema_cotizacion_id is None:
@@ -997,7 +1308,6 @@ class TrucksStep(WizardStep):
                 values.append(self.format_amount(tariff.monto) if tariff else "")
             tag = "evenrow" if idx % 2 == 0 else "oddrow"
             self.table.insert("", tk.END, iid=str(tramo.adicional_camiones_id), values=values, tags=(tag,))
-
 
     def new_tramo(self) -> None:
         dialog = TramoCamionesDialog(parent=self.wizard, service=self.wizard.camiones_service, esquema_cotizacion_id=self.wizard.esquema_cotizacion_id)
@@ -1139,37 +1449,183 @@ class ScheduleStep(WizardStep):
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(3, weight=1)
-        ttk.Label(self, text="4. Adicionales por día y hora", style="SectionTitle.TLabel").grid(row=0, column=0, sticky="w", pady=(0, 8))
-        ttk.Label(self, text="Componente opcional. Cada posición conserva un importe independiente.").grid(row=1, column=0, sticky="w", pady=(0, 10))
 
-        controls = ttk.LabelFrame(self, text="Configuración y selección", padding=8)
+        ctk.CTkLabel(
+            self,
+            text="4. Adicionales por día y hora",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=18, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 4))
+
+        ctk.CTkLabel(
+            self,
+            text="Componente opcional. Cada posición conserva un importe independiente.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
+        ).grid(row=1, column=0, sticky="w", pady=(0, 14))
+
+        # Panel de Controles
+        controls = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
         controls.grid(row=2, column=0, sticky="ew", pady=(0, 10))
-        ttk.Button(controls, text="Inicializar 168 posiciones", command=self.initialize).grid(row=0, column=0)
-        ttk.Button(controls, text="Eliminar configuración", command=self.delete_configuration).grid(row=0, column=1, padx=(8, 16))
-        ttk.Label(controls, text="Días").grid(row=0, column=2, sticky="w")
-        self.days_list = tk.Listbox(controls, selectmode=tk.EXTENDED, exportselection=False, height=3, width=16)
-        self.days_list.grid(row=1, column=2, rowspan=2, sticky="nsew", pady=(4, 0))
+
+        ctrl_inner = ctk.CTkFrame(controls, fg_color="transparent")
+        ctrl_inner.pack(fill=tk.X, padx=16, pady=12)
+
+        ctk.CTkButton(
+            ctrl_inner,
+            text="⚡ Inicializar 168 posiciones",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.initialize,
+        ).pack(side="left")
+
+        ctk.CTkButton(
+            ctrl_inner,
+            text="Eliminar configuración",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_DANGER,
+            hover_color=COLOR_DANGER_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.delete_configuration,
+        ).pack(side="left", padx=(8, 16))
+
+        mode = ctk.get_appearance_mode()
+        is_dark = mode == "Dark"
+
+        ctk.CTkLabel(
+            ctrl_inner,
+            text="Días:",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(side="left")
+
+        self.days_list = tk.Listbox(
+            ctrl_inner,
+            selectmode=tk.EXTENDED,
+            exportselection=False,
+            height=2,
+            width=14,
+            bg="#1E293B" if is_dark else "#FFFFFF",
+            fg="#F8FAFC" if is_dark else "#0F172A",
+            selectbackground="#4F46E5",
+            selectforeground="#FFFFFF",
+            font=(FONT_FAMILY, 9),
+        )
+        self.days_list.pack(side="left", padx=(6, 12))
         for number in range(1, 8):
             self.days_list.insert(tk.END, self.DAYS[number])
-        hours = tuple(f"{hour:02d}" for hour in range(24))
-        ttk.Combobox(controls, textvariable=self.hour_from_var, state="readonly", values=hours, width=5).grid(row=1, column=3, padx=(10, 0))
-        ttk.Combobox(controls, textvariable=self.hour_to_var, state="readonly", values=hours, width=5).grid(row=1, column=4, padx=(6, 0))
-        ttk.Button(controls, text="Seleccionar rango", command=self.select_range).grid(row=1, column=5, padx=(8, 0))
-        ttk.Button(controls, text="Semana completa", command=self.select_all).grid(row=1, column=6, padx=(8, 0))
-        ttk.Button(controls, text="Limpiar selección", command=self.clear_selection).grid(row=1, column=7, padx=(8, 0))
-        controls.columnconfigure(2, weight=1)
 
-        matrix = ttk.Frame(self)
-        matrix.grid(row=3, column=0, sticky="nsew")
-        matrix.columnconfigure(0, weight=1)
-        matrix.rowconfigure(0, weight=1)
+        ctk.CTkLabel(
+            ctrl_inner,
+            text="Horas:",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(side="left")
+
+        hours = [f"{hour:02d}" for hour in range(24)]
+        self.hour_from_opt = ctk.CTkOptionMenu(
+            ctrl_inner,
+            variable=self.hour_from_var,
+            values=hours,
+            width=70,
+            height=32,
+            fg_color=COLOR_BG_CARD,
+            button_color=COLOR_PRIMARY,
+            text_color=COLOR_TEXT_PRIMARY,
+        )
+        self.hour_from_opt.pack(side="left", padx=(4, 4))
+
+        ctk.CTkLabel(ctrl_inner, text="a", text_color=COLOR_TEXT_MUTED).pack(side="left", padx=2)
+
+        self.hour_to_opt = ctk.CTkOptionMenu(
+            ctrl_inner,
+            variable=self.hour_to_var,
+            values=hours,
+            width=70,
+            height=32,
+            fg_color=COLOR_BG_CARD,
+            button_color=COLOR_PRIMARY,
+            text_color=COLOR_TEXT_PRIMARY,
+        )
+        self.hour_to_opt.pack(side="left", padx=(4, 10))
+
+        ctk.CTkButton(
+            ctrl_inner,
+            text="Seleccionar rango",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.select_range,
+        ).pack(side="left", padx=(0, 6))
+
+        ctk.CTkButton(
+            ctrl_inner,
+            text="Semana completa",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.select_all,
+        ).pack(side="left", padx=(0, 6))
+
+        ctk.CTkButton(
+            ctrl_inner,
+            text="Limpiar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.clear_selection,
+        ).pack(side="left")
+
+        # Matriz Card
+        matrix_card = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        matrix_card.grid(row=3, column=0, sticky="nsew")
+
+        matrix_inner = ctk.CTkFrame(matrix_card, fg_color="transparent")
+        matrix_inner.pack(fill=tk.BOTH, expand=True, padx=16, pady=12)
+
+        table_frame = ctk.CTkFrame(matrix_inner, fg_color="transparent")
+        table_frame.pack(fill=tk.BOTH, expand=True)
+        table_frame.columnconfigure(0, weight=1)
+        table_frame.rowconfigure(0, weight=1)
+
         columns = ["dia", *[f"hora_{hour:02d}" for hour in range(24)]]
-        self.table = ttk.Treeview(matrix, columns=columns, show="headings", selectmode="none", height=7)
+        self.table = ttk.Treeview(
+            table_frame,
+            columns=columns,
+            show="headings",
+            selectmode="none",
+            height=7,
+            style="Custom.Treeview",
+        )
         self.table.grid(row=0, column=0, sticky="nsew")
         self.table.bind("<Button-1>", self._table_click)
-        xbar = ttk.Scrollbar(matrix, orient=tk.HORIZONTAL, command=self.table.xview)
+
+        xbar = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL, command=self.table.xview)
         xbar.grid(row=1, column=0, sticky="ew")
         self.table.configure(xscrollcommand=xbar.set)
+
         self.table.heading("dia", text="Día")
         self.table.column("dia", width=105, anchor=tk.W, stretch=False)
         for hour in range(24):
@@ -1177,13 +1633,44 @@ class ScheduleStep(WizardStep):
             self.table.heading(name, text=f"{hour:02d}:00")
             self.table.column(name, width=80, anchor=tk.E, stretch=False)
 
-        actions = ttk.Frame(self)
-        actions.grid(row=4, column=0, sticky="ew", pady=(8, 0))
-        actions.columnconfigure(3, weight=1)
-        ttk.Button(actions, text="Asignar importe", command=self.assign_amount).grid(row=0, column=0)
-        ttk.Button(actions, text="Restablecer a cero", command=self.reset_amount).grid(row=0, column=1, padx=(8, 0))
-        ttk.Label(actions, textvariable=self.selection_var).grid(row=0, column=2, sticky="w", padx=(14, 0))
-        ttk.Label(actions, textvariable=self.status_var).grid(row=0, column=3, sticky="e")
+        actions = ctk.CTkFrame(matrix_inner, fg_color="transparent")
+        actions.pack(fill=tk.X, pady=(10, 0))
+
+        ctk.CTkButton(
+            actions,
+            text="💰 Asignar importe",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.assign_amount,
+        ).pack(side="left")
+
+        ctk.CTkButton(
+            actions,
+            text="Restablecer a cero",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=6,
+            height=32,
+            command=self.reset_amount,
+        ).pack(side="left", padx=(8, 0))
+
+        ctk.CTkLabel(
+            actions,
+            textvariable=self.selection_var,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
+        ).pack(side="left", padx=(14, 0))
+
+        ctk.CTkLabel(
+            actions,
+            textvariable=self.status_var,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11, weight="bold"),
+            text_color=COLOR_PRIMARY,
+        ).pack(side="right")
 
     def refresh(self) -> None:
         if self.wizard.esquema_cotizacion_id is None:
@@ -1217,7 +1704,6 @@ class ScheduleStep(WizardStep):
                     values.append(f"[{value}]" if position.dia_hora_id in self.selected_ids else value)
             tag = "evenrow" if day % 2 == 0 else "oddrow"
             self.table.insert("", tk.END, iid=f"dia_{day}", values=values, tags=(tag,))
-
 
     def _table_click(self, event) -> None:
         if self.table.identify_region(event.x, event.y) != "cell":
@@ -1339,13 +1825,24 @@ class ReviewStep(WizardStep):
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        ttk.Label(self, text="5. Revisión", style="SectionTitle.TLabel").grid(row=0, column=0, sticky="w", pady=(0, 8))
-        ttk.Label(self, text="Vista de solo lectura. Finalizar no cambia el estado BORRADOR.").grid(row=1, column=0, sticky="w", pady=(0, 12))
+        ctk.CTkLabel(
+            self,
+            text="5. Revisión y comprobación final",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=18, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).grid(row=0, column=0, sticky="w", pady=(0, 4))
+
+        ctk.CTkLabel(
+            self,
+            text="Vista de solo lectura del esquema completo. Revisa los datos y comprobaciones antes de aprobar.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
+        ).grid(row=1, column=0, sticky="w", pady=(0, 14))
 
         self.notebook = ttk.Notebook(self)
         self.notebook.grid(row=2, column=0, sticky="nsew")
         self.tabs = []
-        for name in ("General", "Tarifas", "Camiones", "Día y hora", "Comprobación"):
+        for name in ("1. General", "2. Tarifas", "3. Camiones", "4. Día y hora", "5. Comprobación"):
             tab = ttk.Frame(self.notebook, padding=14)
             self.notebook.add(tab, text=name)
             self.tabs.append(tab)
@@ -1369,24 +1866,42 @@ class ReviewStep(WizardStep):
 
     def _render_general(self, tab, summary) -> None:
         general = summary["general"]
-        text = (
-            f"Esquema: {general['esquema_cotizacion_id']}\n"
-            f"Estado: {general['estado']}\n"
-            f"Proveedor: {general['proveedor']}\n"
-            f"CUIT: {general['cuit']}\n"
-            f"Aduana: {general['aduana_codigo']} - {general['aduana_nombre']}\n"
-            f"Inicio: {general['fecha_inicio'].strftime('%d/%m/%Y')}\n"
-            f"Fin: {general['fecha_fin'].strftime('%d/%m/%Y') if general['fecha_fin'] else 'Sin definir'}\n"
-            f"Moneda: {general['moneda_codigo']}\n\n"
-            f"Observaciones:\n{general['observaciones'] or 'Sin observaciones.'}"
+        card = ctk.CTkFrame(
+            tab,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=10,
+            border_width=1,
+            border_color=COLOR_BORDER,
         )
-        ttk.Label(tab, text=text, justify=tk.LEFT, wraplength=1000).pack(anchor=tk.W)
+        card.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
+
+        card_inner = ctk.CTkFrame(card, fg_color="transparent")
+        card_inner.pack(fill=tk.BOTH, expand=True, padx=20, pady=16)
+
+        text = (
+            f"📄 Esquema ID: {general['esquema_cotizacion_id']}\n"
+            f"📌 Estado: {general['estado']}\n"
+            f"🏢 Proveedor: {general['proveedor']}\n"
+            f"🔢 CUIT: {general['cuit']}\n"
+            f"🏛️ Aduana: {general['aduana_codigo']} - {general['aduana_nombre']}\n"
+            f"📅 Fecha de Inicio: {general['fecha_inicio'].strftime('%d/%m/%Y')}\n"
+            f"📅 Fecha de Fin: {general['fecha_fin'].strftime('%d/%m/%Y') if general['fecha_fin'] else 'Sin definir'}\n"
+            f"💵 Moneda: {general['moneda_codigo']}\n\n"
+            f"📝 Observaciones:\n{general['observaciones'] or 'Sin observaciones.'}"
+        )
+        ctk.CTkLabel(
+            card_inner,
+            text=text,
+            justify="left",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+            text_color=COLOR_TEXT_PRIMARY,
+        ).pack(anchor="w")
 
     def _render_main_tariffs(self, tab, summary) -> None:
         channels = summary["canales"]
         rows = summary["tarifas_principales"]
         columns = ["zona", *[f"c_{c['canal_selectividad_id']}" for c in channels]]
-        table = ttk.Treeview(tab, columns=columns, show="headings")
+        table = ttk.Treeview(tab, columns=columns, show="headings", style="Custom.Treeview")
         table.pack(fill=tk.BOTH, expand=True)
         table.heading("zona", text="Zona")
         table.column("zona", width=200, anchor=tk.W)
@@ -1394,21 +1909,23 @@ class ReviewStep(WizardStep):
             name = f"c_{channel['canal_selectividad_id']}"
             table.heading(name, text=channel["nombre"])
             table.column(name, width=140, anchor=tk.E)
-        for row in rows:
+        apply_treeview_row_tags(table)
+        for idx, row in enumerate(rows):
             values = [row["zona"]]
             for channel in channels:
                 value = row["tarifas"].get(channel["canal_selectividad_id"])
                 values.append(self.format_amount(value) if value is not None else "Sin cargar")
-            table.insert("", tk.END, values=values)
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            table.insert("", tk.END, values=values, tags=(tag,))
 
     def _render_trucks(self, tab, summary) -> None:
         zones = summary["zonas"]
         ranges = summary["tramos_camiones"]
         if not ranges:
-            ttk.Label(tab, text="No hay adicionales por camiones configurados.").pack(anchor=tk.W)
+            ctk.CTkLabel(tab, text="ℹ️ No hay adicionales por camiones configurados.", font=ctk.CTkFont(family=FONT_FAMILY, size=13), text_color=COLOR_TEXT_MUTED).pack(anchor="w", padx=10, pady=10)
             return
         columns = ["tramo", *[f"z_{z['zona_id']}" for z in zones]]
-        table = ttk.Treeview(tab, columns=columns, show="headings")
+        table = ttk.Treeview(tab, columns=columns, show="headings", style="Custom.Treeview")
         table.pack(fill=tk.BOTH, expand=True)
         table.heading("tramo", text="Tramo")
         table.column("tramo", width=200, anchor=tk.W)
@@ -1416,38 +1933,46 @@ class ReviewStep(WizardStep):
             name = f"z_{zone['zona_id']}"
             table.heading(name, text=zone["nombre"])
             table.column(name, width=140, anchor=tk.E)
-        for item in ranges:
+        apply_treeview_row_tags(table)
+        for idx, item in enumerate(ranges):
             values = [item["descripcion"]]
             for zone in zones:
                 value = item["tarifas"].get(zone["zona_id"])
                 values.append(self.format_amount(value) if value is not None else "Sin cargar")
-            table.insert("", tk.END, values=values)
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            table.insert("", tk.END, values=values, tags=(tag,))
 
     def _render_schedule(self, tab, summary) -> None:
         schedule = summary["horario"]
-        ttk.Label(
+        ctk.CTkLabel(
             tab,
             text=(
                 f"Posiciones: {schedule['cantidad_registros']} | "
-                f"Importe > 0: {schedule['cantidad_mayor_cero']} | "
-                f"En cero: {schedule['cantidad_en_cero']}"
+                f"Con recargo (> 0): {schedule['cantidad_mayor_cero']} | "
+                f"Tarifa base (en cero): {schedule['cantidad_en_cero']}"
             ),
-        ).pack(anchor=tk.W, pady=(0, 10))
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_PRIMARY,
+        ).pack(anchor="w", pady=(0, 10))
         columns = ("dia", "desde", "hasta", "monto")
-        table = ttk.Treeview(tab, columns=columns, show="headings")
+        table = ttk.Treeview(tab, columns=columns, show="headings", style="Custom.Treeview")
         table.pack(fill=tk.BOTH, expand=True)
         for name, label in (("dia", "Día"), ("desde", "Desde"), ("hasta", "Hasta"), ("monto", "Importe")):
             table.heading(name, text=label)
-        for block in schedule["bloques"]:
-            table.insert("", tk.END, values=(block["nombre_dia"], f"{block['hora_desde']:02d}:00", f"{block['hora_hasta']:02d}:00", self.format_amount(block["monto"])))
+        apply_treeview_row_tags(table)
+        for idx, block in enumerate(schedule["bloques"]):
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            table.insert("", tk.END, values=(block["nombre_dia"], f"{block['hora_desde']:02d}:00", f"{block['hora_hasta']:02d}:00", self.format_amount(block["monto"])), tags=(tag,))
 
     def _render_warnings(self, tab, summary) -> None:
         columns = ("nivel", "detalle")
-        table = ttk.Treeview(tab, columns=columns, show="headings")
+        table = ttk.Treeview(tab, columns=columns, show="headings", style="Custom.Treeview")
         table.pack(fill=tk.BOTH, expand=True)
         table.heading("nivel", text="Nivel")
-        table.heading("detalle", text="Detalle")
+        table.heading("detalle", text="Detalle de Comprobación")
         table.column("nivel", width=130)
         table.column("detalle", width=900, anchor=tk.W)
-        for item in summary["advertencias"]:
-            table.insert("", tk.END, values=(item["nivel"], item["mensaje"]))
+        apply_treeview_row_tags(table)
+        for idx, item in enumerate(summary["advertencias"]):
+            tag = "evenrow" if idx % 2 == 0 else "oddrow"
+            table.insert("", tk.END, values=(item["nivel"], item["mensaje"]), tags=(tag,))
