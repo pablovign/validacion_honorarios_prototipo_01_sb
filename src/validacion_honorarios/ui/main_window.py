@@ -38,10 +38,12 @@ from validacion_honorarios.ui.theme import (
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     FONT_FAMILY,
+    apply_global_ttk_theme,
     get_font,
     setup_theme,
     style_treeview,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +52,14 @@ class MainWindow(ctk.CTk):
     """Ventana principal de la aplicación."""
 
     def __init__(self) -> None:
-        setup_theme()
         super().__init__()
+        setup_theme()
+        apply_global_ttk_theme(ttk.Style(self))
+        style_treeview()
 
         self.title(f"{settings.app_name} - Gestión de Honorarios")
         self.geometry("1300x800")
+
         self.minsize(1050, 650)
 
         # Servicios para métricas del dashboard
@@ -241,8 +246,12 @@ class MainWindow(ctk.CTk):
             ctk.set_appearance_mode("Light")
             self.theme_switch.configure(text="Modo Claro")
 
-        # Actualizar estilos de tablas activas
+        # Actualizar estilos globales y de tablas activas
+        apply_global_ttk_theme(ttk.Style(self))
         style_treeview()
+        if self.current_view is not None and hasattr(self.current_view, "_load_data"):
+            self.current_view._load_data()
+
 
     def _replace_view(self, view: tk.Widget) -> None:
         if self.current_view is not None:

@@ -172,9 +172,10 @@ class ProveedoresView(ctk.CTkFrame):
         )
         table_card.pack(fill=tk.BOTH, expand=True, padx=28, pady=(0, 16))
 
-        table_inner = tk.Frame(table_card, bg="")
+        table_inner = ctk.CTkFrame(table_card, fg_color="transparent")
         table_inner.pack(fill=tk.BOTH, expand=True, padx=12, pady=12)
         table_inner.rowconfigure(0, weight=1)
+
         table_inner.columnconfigure(0, weight=1)
 
         columns = (
