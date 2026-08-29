@@ -530,10 +530,11 @@ class GeneralStep(WizardStep):
             text_color=COLOR_TEXT_PRIMARY,
         ).grid(row=0, column=0, columnspan=2, sticky="w")
 
-        self.provider_combo = ctk.CTkOptionMenu(
+        self.provider_combo = ctk.CTkComboBox(
             form_inner,
             variable=self.provider_var,
             command=self._provider_changed,
+            state="readonly",
             fg_color=COLOR_BG_CARD,
             button_color=COLOR_PRIMARY,
             button_hover_color=COLOR_PRIMARY_HOVER,
@@ -591,10 +592,11 @@ class GeneralStep(WizardStep):
         )
         self.start_date_entry.grid(row=5, column=0, sticky="ew", pady=(4, 12))
 
-        self.currency_combo = ctk.CTkOptionMenu(
+        self.currency_combo = ctk.CTkComboBox(
             form_inner,
             variable=self.currency_var,
             values=["ARS", "USD"],
+            state="readonly",
             fg_color=COLOR_BG_CARD,
             button_color=COLOR_PRIMARY,
             button_hover_color=COLOR_PRIMARY_HOVER,
@@ -605,6 +607,7 @@ class GeneralStep(WizardStep):
             corner_radius=6,
         )
         self.currency_combo.grid(row=5, column=1, sticky="ew", padx=(14, 0), pady=(4, 12))
+
 
 
         ctk.CTkLabel(
@@ -1542,10 +1545,11 @@ class ScheduleStep(WizardStep):
         ).pack(side="left")
 
         hours = [f"{hour:02d}" for hour in range(24)]
-        self.hour_from_opt = ctk.CTkOptionMenu(
+        self.hour_from_opt = ctk.CTkComboBox(
             ctrl_inner,
             variable=self.hour_from_var,
             values=hours,
+            state="readonly",
             width=70,
             height=32,
             fg_color=COLOR_BG_CARD,
@@ -1560,10 +1564,11 @@ class ScheduleStep(WizardStep):
 
         ctk.CTkLabel(ctrl_inner, text="a", text_color=COLOR_TEXT_MUTED).pack(side="left", padx=2)
 
-        self.hour_to_opt = ctk.CTkOptionMenu(
+        self.hour_to_opt = ctk.CTkComboBox(
             ctrl_inner,
             variable=self.hour_to_var,
             values=hours,
+            state="readonly",
             width=70,
             height=32,
             fg_color=COLOR_BG_CARD,
@@ -1575,6 +1580,7 @@ class ScheduleStep(WizardStep):
             corner_radius=6,
         )
         self.hour_to_opt.pack(side="left", padx=(4, 10))
+
 
 
         ctk.CTkButton(
