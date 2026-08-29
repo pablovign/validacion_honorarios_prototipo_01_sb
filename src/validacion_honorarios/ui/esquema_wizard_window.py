@@ -1,6 +1,7 @@
 import tkinter as tk
 from decimal import Decimal
 from tkinter import messagebox, ttk
+import customtkinter as ctk
 
 from validacion_honorarios.db.models import (
     AdicionalCamiones,
@@ -30,10 +31,29 @@ from validacion_honorarios.ui.tramo_camiones_dialog import (
     TramoCamionesDialog,
 )
 from validacion_honorarios.ui.zona_dialog import ZonaDialog
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_CARD,
+    COLOR_BG_MAIN,
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_DANGER,
+    COLOR_DANGER_HOVER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_SUCCESS,
+    COLOR_SUCCESS_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
+    apply_global_ttk_theme,
+    style_treeview,
+)
 
 
-class EsquemaWizardWindow(tk.Toplevel):
-    """Wizard único para crear o continuar un esquema de cotización."""
+class EsquemaWizardWindow(ctk.CTkToplevel):
+    """Wizard moderno para crear o continuar un esquema de cotización."""
 
     STEP_NAMES = (
         "1. Datos generales",
@@ -62,7 +82,7 @@ class EsquemaWizardWindow(tk.Toplevel):
         self.resultado_guardado = False
 
         self.steps: list[ttk.Frame] = []
-        self.step_buttons: list[ttk.Button] = []
+        self.step_buttons: list[ctk.CTkButton] = []
 
         self._configure_window()
         self._build_shell()
@@ -78,81 +98,147 @@ class EsquemaWizardWindow(tk.Toplevel):
         return self.esquema is None or self.esquema.estado == "BORRADOR"
 
     def _configure_window(self) -> None:
-        self.title("Asistente de esquema de cotización")
-        self.geometry("1450x840")
+        apply_global_ttk_theme()
+        self.title("Asistente de Esquema de Cotización")
+        self.geometry("1450x860")
         self.minsize(1080, 680)
 
     def _build_shell(self) -> None:
         self.columnconfigure(0, weight=1)
         self.rowconfigure(2, weight=1)
 
-        header = ttk.Frame(self, padding=(16, 14, 16, 8))
-        header.grid(row=0, column=0, sticky="ew")
-        header.columnconfigure(0, weight=1)
+        # Header Superior
+        header = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=0,
+            border_width=0,
+        )
+        header.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
 
-        ttk.Label(
-            header,
-            text="Asistente de esquema de cotización",
-            style="SectionTitle.TLabel",
-        ).grid(row=0, column=0, sticky="w")
+        header_inner = ctk.CTkFrame(header, fg_color="transparent")
+        header_inner.pack(fill=tk.X, padx=24, pady=16)
 
-        self.header_status = ttk.Label(header, text="Nuevo esquema")
-        self.header_status.grid(row=1, column=0, sticky="w", pady=(6, 0))
+        title_lbl = ctk.CTkLabel(
+            header_inner,
+            text="⚡ Asistente de Esquema de Cotización",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=20, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        )
+        title_lbl.pack(anchor="w")
 
-        nav = ttk.Frame(self, padding=(16, 4, 16, 10))
-        nav.grid(row=1, column=0, sticky="ew")
+        self.header_status = ctk.CTkLabel(
+            header_inner,
+            text="Nuevo esquema",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_MUTED,
+        )
+        self.header_status.pack(anchor="w", pady=(2, 0))
+
+        # Barra de Navegación de Pasos (Stepper)
+        nav_card = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=0,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        nav_card.grid(row=1, column=0, sticky="ew", padx=0, pady=(0, 14))
+
+        nav = ctk.CTkFrame(nav_card, fg_color="transparent")
+        nav.pack(fill=tk.X, padx=20, pady=10)
 
         for index, name in enumerate(self.STEP_NAMES):
-            button = ttk.Button(
+            button = ctk.CTkButton(
                 nav,
                 text=name,
+                font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+                fg_color="transparent",
+                text_color=COLOR_TEXT_MUTED,
+                hover_color=COLOR_BG_CARD,
+                height=36,
+                corner_radius=8,
                 command=lambda value=index: self._request_step(value),
             )
-            button.grid(row=0, column=index, sticky="ew", padx=(0, 6))
+            button.grid(row=0, column=index, sticky="ew", padx=4)
             nav.columnconfigure(index, weight=1)
             self.step_buttons.append(button)
 
-        self.content = ttk.Frame(self, padding=(16, 0, 16, 8))
+        # Contenedor de Pasos
+        self.content = ttk.Frame(self, padding=(20, 0, 20, 8))
         self.content.grid(row=2, column=0, sticky="nsew")
         self.content.columnconfigure(0, weight=1)
         self.content.rowconfigure(0, weight=1)
 
-        footer = ttk.Frame(self, padding=16)
-        footer.grid(row=3, column=0, sticky="ew")
-        footer.columnconfigure(2, weight=1)
+        # Footer
+        footer_card = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=0,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        footer_card.grid(row=3, column=0, sticky="ew")
 
-        self.back_button = ttk.Button(
+        footer = ctk.CTkFrame(footer_card, fg_color="transparent")
+        footer.pack(fill=tk.X, padx=24, pady=14)
+
+        self.back_button = ctk.CTkButton(
             footer,
-            text="Atrás",
+            text="← Atrás",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=8,
+            height=36,
             command=self._back,
         )
-        self.back_button.grid(row=0, column=0)
+        self.back_button.pack(side="left")
 
-        self.next_button = ttk.Button(
+        self.next_button = ctk.CTkButton(
             footer,
-            text="Guardar y continuar",
+            text="Guardar y continuar →",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=8,
+            height=36,
             command=self._next,
         )
-        self.next_button.grid(row=0, column=1, padx=(8, 0))
+        self.next_button.pack(side="left", padx=(8, 0))
 
-        self.footer_message = ttk.Label(
+        self.footer_message = ctk.CTkLabel(
             footer,
-            text="Los cambios de matrices se guardan al confirmar cada operación.",
+            text="* Los cambios de matrices se guardan al confirmar cada operación.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
         )
-        self.footer_message.grid(row=0, column=2, sticky="w", padx=(18, 0))
+        self.footer_message.pack(side="left", padx=(18, 0))
 
-        self.approve_button = ttk.Button(
-            footer,
-            text="Aprobar esquema",
-            command=self._approve,
-        )
-        self.approve_button.grid(row=0, column=3, padx=(8, 0))
-        self.close_button = ttk.Button(
+        self.close_button = ctk.CTkButton(
             footer,
             text="Guardar borrador y cerrar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=8,
+            height=36,
             command=self._close,
         )
-        self.close_button.grid(row=0, column=4, padx=(8, 0))
+        self.close_button.pack(side="right")
+
+        self.approve_button = ctk.CTkButton(
+            footer,
+            text="✓ Aprobar esquema",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            fg_color=COLOR_SUCCESS,
+            hover_color=COLOR_SUCCESS_HOVER,
+            corner_radius=8,
+            height=36,
+            command=self._approve,
+        )
+        self.approve_button.pack(side="right", padx=(0, 8))
+
 
     def _build_steps(self) -> None:
         self.general_step = GeneralStep(
@@ -250,7 +336,24 @@ class EsquemaWizardWindow(tk.Toplevel):
                 allowed = index == len(self.steps) - 1
             else:
                 allowed = self.esquema_cotizacion_id is not None or index == 0
+
             button.configure(state=tk.NORMAL if allowed else tk.DISABLED)
+
+            if index == self.current_step:
+                button.configure(
+                    fg_color=COLOR_PRIMARY[0],
+                    text_color="#FFFFFF",
+                )
+            elif allowed:
+                button.configure(
+                    fg_color="transparent",
+                    text_color=COLOR_TEXT_PRIMARY[0],
+                )
+            else:
+                button.configure(
+                    fg_color="transparent",
+                    text_color=COLOR_TEXT_MUTED[0],
+                )
 
         back_enabled = (
             self.current_step > 0
@@ -261,15 +364,15 @@ class EsquemaWizardWindow(tk.Toplevel):
         )
 
         if self.current_step == 0:
-            self.next_button.grid()
+            self.next_button.pack(side="left", padx=(8, 0))
             self.next_button.configure(
-                text="Guardar y continuar" if self.editable else "Siguiente"
+                text="Guardar y continuar →" if self.editable else "Siguiente →"
             )
         elif self.current_step == len(self.steps) - 1:
-            self.next_button.grid_remove()
+            self.next_button.pack_forget()
         else:
-            self.next_button.grid()
-            self.next_button.configure(text="Siguiente")
+            self.next_button.pack(side="left", padx=(8, 0))
+            self.next_button.configure(text="Siguiente →")
 
         approve_visible = (
             self.current_step == len(self.steps) - 1
@@ -277,9 +380,9 @@ class EsquemaWizardWindow(tk.Toplevel):
             and self.esquema.estado == "BORRADOR"
         )
         if approve_visible:
-            self.approve_button.grid()
+            self.approve_button.pack(side="right", padx=(0, 8))
         else:
-            self.approve_button.grid_remove()
+            self.approve_button.pack_forget()
 
         self.close_button.configure(
             text=(
@@ -288,6 +391,7 @@ class EsquemaWizardWindow(tk.Toplevel):
                 else "Cerrar"
             )
         )
+
 
     def _back(self) -> None:
         if self.current_step > 0:

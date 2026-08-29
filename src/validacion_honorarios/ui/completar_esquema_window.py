@@ -1,6 +1,7 @@
 import tkinter as tk
 from decimal import Decimal
 from tkinter import messagebox, ttk
+import customtkinter as ctk
 
 from validacion_honorarios.db.models import (
     CanalSelectividad,
@@ -28,9 +29,24 @@ from validacion_honorarios.ui.adicionales_dia_hora_window import (
 from validacion_honorarios.ui.resumen_esquema_window import (
     ResumenEsquemaWindow,
 )
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_CARD,
+    COLOR_BG_MAIN,
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
+    apply_global_ttk_theme,
+    style_treeview,
+)
 
-class CompletarEsquemaWindow(tk.Toplevel):
-    """Edición de los componentes internos de un esquema."""
+class CompletarEsquemaWindow(ctk.CTkToplevel):
+    """Edición de los componentes internos de un esquema con tema moderno."""
 
     def __init__(
         self,
@@ -80,12 +96,14 @@ class CompletarEsquemaWindow(tk.Toplevel):
         self.transient(parent)
 
     def _configure_window(self) -> None:
+        apply_global_ttk_theme()
         self.title(
-            "Completar esquema de cotización"
+            "Completar Esquema de Cotización"
         )
 
-        self.geometry("1450x820")
+        self.geometry("1450x840")
         self.minsize(1100, 650)
+
 
     def _load_reference_data(self) -> None:
         self.esquema = (

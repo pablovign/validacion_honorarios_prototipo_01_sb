@@ -1,15 +1,31 @@
 import tkinter as tk
 from decimal import Decimal
 from tkinter import messagebox, ttk
+import customtkinter as ctk
 
 from validacion_honorarios.services import (
     ApplicationError,
     ResumenEsquemaService,
 )
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_CARD,
+    COLOR_BG_MAIN,
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
+    apply_global_ttk_theme,
+    style_treeview,
+)
 
 
-class ResumenEsquemaWindow(tk.Toplevel):
-    """Vista integral y de solo lectura de un esquema."""
+class ResumenEsquemaWindow(ctk.CTkToplevel):
+    """Vista integral y moderna de solo lectura de un esquema."""
 
     def __init__(
         self,
@@ -29,37 +45,49 @@ class ResumenEsquemaWindow(tk.Toplevel):
         self.transient(parent)
 
     def _configure_window(self) -> None:
-        self.title("Vista general del esquema")
-        self.geometry("1350x820")
-        self.minsize(1000, 650)
+        apply_global_ttk_theme()
+        self.title("Vista General del Esquema")
+        self.geometry("1380x840")
+        self.minsize(1020, 650)
 
     def _build_interface(self) -> None:
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
-        header = ttk.Frame(self, padding=14)
-        header.grid(row=0, column=0, sticky="ew")
-        header.columnconfigure(0, weight=1)
-
-        self.title_label = ttk.Label(
-            header,
-            text="Vista general del esquema",
-            style="SectionTitle.TLabel",
+        # Header
+        header = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=0,
+            border_width=0,
         )
-        self.title_label.grid(row=0, column=0, sticky="w")
+        header.grid(row=0, column=0, sticky="ew", padx=0, pady=(0, 10))
 
-        self.state_label = ttk.Label(
-            header,
+        header_inner = ctk.CTkFrame(header, fg_color="transparent")
+        header_inner.pack(fill=tk.X, padx=24, pady=16)
+
+        self.title_label = ctk.CTkLabel(
+            header_inner,
+            text="📄 Vista General del Esquema",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=20, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        )
+        self.title_label.pack(side="left")
+
+        self.state_label = ctk.CTkLabel(
+            header_inner,
             text="",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=13, weight="bold"),
+            text_color=COLOR_PRIMARY,
         )
-        self.state_label.grid(row=0, column=1, sticky="e")
+        self.state_label.pack(side="right")
 
         self.notebook = ttk.Notebook(self)
         self.notebook.grid(
             row=1,
             column=0,
             sticky="nsew",
-            padx=14,
+            padx=20,
             pady=(0, 10),
         )
 
@@ -69,41 +97,63 @@ class ResumenEsquemaWindow(tk.Toplevel):
         self.schedule_tab = ttk.Frame(self.notebook, padding=16)
         self.validation_tab = ttk.Frame(self.notebook, padding=16)
 
-        self.notebook.add(self.general_tab, text="Datos generales")
+        self.notebook.add(self.general_tab, text="1. Datos generales")
         self.notebook.add(
             self.main_tariffs_tab,
-            text="Tarifas principales",
+            text="2. Tarifas principales",
         )
-        self.notebook.add(self.trucks_tab, text="Camiones")
-        self.notebook.add(self.schedule_tab, text="Día y hora")
+        self.notebook.add(self.trucks_tab, text="3. Camiones")
+        self.notebook.add(self.schedule_tab, text="4. Día y hora")
         self.notebook.add(
             self.validation_tab,
-            text="Comprobación",
+            text="5. Comprobación y alertas",
         )
 
-        footer = ttk.Frame(self, padding=(14, 0, 14, 14))
-        footer.grid(row=2, column=0, sticky="ew")
-        footer.columnconfigure(0, weight=1)
+        # Footer
+        footer_card = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=0,
+            border_width=1,
+            border_color=COLOR_BORDER,
+        )
+        footer_card.grid(row=2, column=0, sticky="ew")
 
-        ttk.Label(
+        footer = ctk.CTkFrame(footer_card, fg_color="transparent")
+        footer.pack(fill=tk.X, padx=24, pady=14)
+
+        info_lbl = ctk.CTkLabel(
             footer,
-            text=(
-                "Vista de solo lectura. Los datos se obtienen "
-                "directamente del esquema almacenado."
-            ),
-        ).grid(row=0, column=0, sticky="w")
+            text="* Vista de solo lectura. Los datos se obtienen directamente del esquema almacenado.",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
+        )
+        info_lbl.pack(side="left")
 
-        ttk.Button(
-            footer,
-            text="Actualizar resumen",
-            command=self._load_data,
-        ).grid(row=0, column=1, padx=(8, 0))
-
-        ttk.Button(
+        btn_close = ctk.CTkButton(
             footer,
             text="Cerrar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=8,
+            height=36,
             command=self.destroy,
-        ).grid(row=0, column=2, padx=(8, 0))
+        )
+        btn_close.pack(side="right")
+
+        btn_refresh = ctk.CTkButton(
+            footer,
+            text="🔄 Actualizar resumen",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=8,
+            height=36,
+            command=self._load_data,
+        )
+        btn_refresh.pack(side="right", padx=(0, 8))
+
 
     def _load_data(self) -> None:
         try:

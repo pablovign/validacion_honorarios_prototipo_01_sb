@@ -1,6 +1,7 @@
 import tkinter as tk
 from decimal import Decimal
 from tkinter import messagebox, ttk
+import customtkinter as ctk
 
 from validacion_honorarios.db.models import (
     AdicionalCamiones,
@@ -19,9 +20,24 @@ from validacion_honorarios.ui.monto_camiones_zona_dialog import (
 from validacion_honorarios.ui.tramo_camiones_dialog import (
     TramoCamionesDialog,
 )
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_CARD,
+    COLOR_BG_MAIN,
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
+    apply_global_ttk_theme,
+    style_treeview,
+)
 
 
-class AdicionalesCamionesWindow(tk.Toplevel):
+class AdicionalesCamionesWindow(ctk.CTkToplevel):
     """Gestión de tramos adicionales y tarifas por zona."""
 
     def __init__(
@@ -61,9 +77,11 @@ class AdicionalesCamionesWindow(tk.Toplevel):
         self.transient(parent)
 
     def _configure_window(self) -> None:
-        self.title("Adicionales por camiones")
-        self.geometry("1250x720")
+        apply_global_ttk_theme()
+        self.title("Adicionales por Camiones")
+        self.geometry("1280x740")
         self.minsize(950, 580)
+
 
     def _build_interface(self) -> None:
         self.columnconfigure(0, weight=1)

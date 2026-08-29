@@ -1,6 +1,7 @@
 import tkinter as tk
 from decimal import Decimal
 from tkinter import messagebox, ttk
+import customtkinter as ctk
 
 from validacion_honorarios.db.models import (
     DiaHora,
@@ -14,10 +15,25 @@ from validacion_honorarios.services import (
 from validacion_honorarios.ui.monto_dia_hora_dialog import (
     MontoDiaHoraDialog,
 )
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_CARD,
+    COLOR_BG_MAIN,
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
+    apply_global_ttk_theme,
+    style_treeview,
+)
 
 
-class AdicionalesDiaHoraWindow(tk.Toplevel):
-    """Matriz semanal de adicionales por día y hora."""
+class AdicionalesDiaHoraWindow(ctk.CTkToplevel):
+    """Matriz semanal moderna de adicionales por día y hora."""
 
     DIAS = {
         1: "Lunes",
@@ -63,9 +79,10 @@ class AdicionalesDiaHoraWindow(tk.Toplevel):
         self.transient(parent)
 
     def _configure_window(self) -> None:
-        self.title("Adicionales por día y hora")
-        self.geometry("1500x820")
-        self.minsize(1050, 650)
+        apply_global_ttk_theme()
+        self.title("Matriz Semanal de Día y Hora")
+        self.geometry("1280x760")
+        self.minsize(980, 580)
 
     def _build_interface(self) -> None:
         self.columnconfigure(0, weight=1)

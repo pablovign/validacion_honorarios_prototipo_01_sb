@@ -1,13 +1,26 @@
-import tkinter as tk
-from tkinter import messagebox, ttk
+"""Asignación de importe horario con CustomTkinter."""
 
-from validacion_honorarios.services import (
-    ApplicationError,
-    TarifaDiaHoraService,
+from __future__ import annotations
+
+import tkinter as tk
+from tkinter import messagebox
+import customtkinter as ctk
+
+from validacion_honorarios.services import ApplicationError, TarifaDiaHoraService
+from validacion_honorarios.ui.theme import (
+    COLOR_BG_SURFACE,
+    COLOR_BORDER,
+    COLOR_PRIMARY,
+    COLOR_PRIMARY_HOVER,
+    COLOR_SECONDARY,
+    COLOR_SECONDARY_HOVER,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    FONT_FAMILY,
 )
 
 
-class MontoDiaHoraDialog(tk.Toplevel):
+class MontoDiaHoraDialog(ctk.CTkToplevel):
     """Asigna un mismo importe a una o varias posiciones horarias."""
 
     def __init__(
@@ -36,12 +49,16 @@ class MontoDiaHoraDialog(tk.Toplevel):
 
         self.transient(parent)
         self.grab_set()
-        self.wait_visibility()
+
+        self.after(100, lambda: self._set_focus())
+
+    def _set_focus(self) -> None:
         self.monto_entry.focus_set()
-        self.monto_entry.selection_range(0, tk.END)
+        self.monto_entry.select_range(0, tk.END)
 
     def _configure_window(self) -> None:
-        self.title("Asignar importe horario")
+        self.title("Asignar Importe Horario")
+        self.geometry("500x340")
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self._cancel)
 
@@ -50,66 +67,95 @@ class MontoDiaHoraDialog(tk.Toplevel):
         descripcion_seleccion: str,
         moneda_codigo: str,
     ) -> None:
-        container = ttk.Frame(self, padding=20)
-        container.grid(row=0, column=0, sticky="nsew")
-
-        ttk.Label(
-            container,
-            text="Selección",
-        ).grid(row=0, column=0, sticky=tk.W)
-
-        ttk.Label(
-            container,
-            text=descripcion_seleccion,
-            wraplength=460,
-        ).grid(
-            row=1,
-            column=0,
-            sticky=tk.W,
-            pady=(4, 16),
+        container = ctk.CTkFrame(
+            self,
+            fg_color=COLOR_BG_SURFACE,
+            corner_radius=12,
+            border_width=1,
+            border_color=COLOR_BORDER,
         )
+        container.pack(fill=tk.BOTH, expand=True, padx=16, pady=16)
 
-        ttk.Label(
+        # Header
+        header_lbl = ctk.CTkLabel(
             container,
-            text=f"Importe adicional ({moneda_codigo})",
-        ).grid(row=2, column=0, sticky=tk.W, pady=(0, 4))
+            text="⏰ Importe Adicional Día y Hora",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=16, weight="bold"),
+            text_color=COLOR_TEXT_PRIMARY,
+        )
+        header_lbl.pack(anchor="w", padx=20, pady=(16, 10))
 
-        self.monto_entry = ttk.Entry(
+        # Información selección
+        info_frame = ctk.CTkFrame(container, fg_color=COLOR_BORDER, corner_radius=8)
+        info_frame.pack(fill=tk.X, padx=20, pady=(0, 14), ipady=6, ipadx=8)
+
+        lbl_desc = ctk.CTkLabel(
+            info_frame,
+            text=f"Selección: {descripcion_seleccion}",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            text_color=COLOR_TEXT_PRIMARY,
+            wraplength=420,
+            justify="left",
+        )
+        lbl_desc.pack(anchor="w", padx=10, pady=2)
+
+        # Campo Monto
+        lbl_monto = ctk.CTkLabel(
+            container,
+            text=f"Importe adicional ({moneda_codigo}):",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            text_color=COLOR_TEXT_MUTED,
+        )
+        lbl_monto.pack(anchor="w", padx=20, pady=(0, 2))
+
+        self.monto_entry = ctk.CTkEntry(
             container,
             textvariable=self.monto_var,
-            width=30,
+            font=ctk.CTkFont(family=FONT_FAMILY, size=13),
+            height=36,
+            corner_radius=8,
+            placeholder_text="Ej: 15000.00",
         )
-        self.monto_entry.grid(
-            row=3,
-            column=0,
-            sticky=tk.EW,
-            pady=(0, 8),
-        )
+        self.monto_entry.pack(fill=tk.X, padx=20, pady=(0, 4))
 
-        ttk.Label(
+        lbl_hint = ctk.CTkLabel(
             container,
-            text="Formatos admitidos: 38000, 38000,50 o 38.000,50.",
-            foreground="#555555",
-        ).grid(row=4, column=0, sticky=tk.W, pady=(0, 20))
+            text="* Formatos admitidos: 38000, 38000,50 o 38.000,50",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=11),
+            text_color=COLOR_TEXT_MUTED,
+        )
+        lbl_hint.pack(anchor="w", padx=20, pady=(0, 16))
 
-        buttons = ttk.Frame(container)
-        buttons.grid(row=5, column=0, sticky=tk.E)
+        # Botones
+        btn_frame = ctk.CTkFrame(container, fg_color="transparent")
+        btn_frame.pack(fill=tk.X, padx=20, pady=(0, 16), side="bottom")
 
-        ttk.Button(
-            buttons,
-            text="Cancelar",
-            command=self._cancel,
-        ).pack(side=tk.LEFT, padx=(0, 8))
-
-        ttk.Button(
-            buttons,
-            text="Asignar importe",
+        btn_guardar = ctk.CTkButton(
+            btn_frame,
+            text="Asignar Importe",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12, weight="bold"),
+            fg_color=COLOR_PRIMARY,
+            hover_color=COLOR_PRIMARY_HOVER,
+            corner_radius=8,
+            height=36,
             command=self._save,
-        ).pack(side=tk.LEFT)
+        )
+        btn_guardar.pack(side="right", padx=(8, 0))
 
-        container.columnconfigure(0, weight=1)
-        self.bind("<Return>", lambda _event: self._save())
-        self.bind("<Escape>", lambda _event: self._cancel())
+        btn_cancelar = ctk.CTkButton(
+            btn_frame,
+            text="Cancelar",
+            font=ctk.CTkFont(family=FONT_FAMILY, size=12),
+            fg_color=COLOR_SECONDARY,
+            hover_color=COLOR_SECONDARY_HOVER,
+            corner_radius=8,
+            height=36,
+            command=self._cancel,
+        )
+        btn_cancelar.pack(side="right")
+
+        self.bind("<Return>", lambda _e: self._save())
+        self.bind("<Escape>", lambda _e: self._cancel())
 
     def _save(self) -> None:
         try:
